@@ -1,0 +1,166 @@
+PODS:
+  - Alamofire (5.10.2)
+  - CryptoSwift (1.8.4)
+  - FDFullscreenPopGesture (1.1)
+  - FSPagerView (0.8.3)
+  - GKNavigationBarSwift (1.7.3)
+  - IQKeyboardManagerSwift (6.5.16)
+  - Kingfisher (7.12.0)
+  - lottie-ios (4.4.1)
+  - Masonry (1.1.0)
+  - SJBaseVideoPlayer (3.7.7.1):
+    - Masonry
+    - SJBaseVideoPlayer/AVPlayer (= 3.7.7.1)
+    - SJBaseVideoPlayer/Common (= 3.7.7.1)
+    - SJUIKit/AttributesFactory (>= 0.0.0.38)
+    - SJUIKit/ObserverHelper
+    - SJUIKit/Queues
+    - SJUIKit/SQLite3
+  - SJBaseVideoPlayer/AVPlayer (3.7.7.1):
+    - Masonry
+    - SJBaseVideoPlayer/Common
+    - SJUIKit/AttributesFactory (>= 0.0.0.38)
+    - SJUIKit/ObserverHelper
+    - SJUIKit/Queues
+    - SJUIKit/SQLite3
+  - SJBaseVideoPlayer/Common (3.7.7.1):
+    - Masonry
+    - SJBaseVideoPlayer/ResourceLoader
+    - SJUIKit/AttributesFactory (>= 0.0.0.38)
+    - SJUIKit/ObserverHelper
+    - SJUIKit/Queues
+    - SJUIKit/SQLite3
+  - SJBaseVideoPlayer/ResourceLoader (3.7.7.1):
+    - Masonry
+    - SJUIKit/AttributesFactory (>= 0.0.0.38)
+    - SJUIKit/ObserverHelper
+    - SJUIKit/Queues
+    - SJUIKit/SQLite3
+  - SJUIKit/AttributesFactory (0.0.0.59):
+    - SJUIKit/AttributesFactory/Deprecated (= 0.0.0.59)
+    - SJUIKit/AttributesFactory/UIKitText (= 0.0.0.59)
+  - SJUIKit/AttributesFactory/Deprecated (0.0.0.59)
+  - SJUIKit/AttributesFactory/UIKitText (0.0.0.59)
+  - SJUIKit/ObserverHelper (0.0.0.59)
+  - SJUIKit/Queues (0.0.0.59)
+  - SJUIKit/SQLite3 (0.0.0.59):
+    - SJUIKit/SQLite3/Core (= 0.0.0.59)
+    - SJUIKit/SQLite3/Protocol (= 0.0.0.59)
+    - YYModel
+  - SJUIKit/SQLite3/Core (0.0.0.59):
+    - SJUIKit/SQLite3/Protocol
+    - YYModel
+  - SJUIKit/SQLite3/Protocol (0.0.0.59):
+    - YYModel
+  - SJVideoPlayer (3.4.3):
+    - SJBaseVideoPlayer (>= 3.7.5)
+    - SJVideoPlayer/Common (= 3.4.3)
+    - SJVideoPlayer/ControlLayers (= 3.4.3)
+    - SJVideoPlayer/ResourceLoader (= 3.4.3)
+  - SJVideoPlayer/Common (3.4.3):
+    - Masonry
+    - SJBaseVideoPlayer (>= 3.7.5)
+    - SJUIKit/AttributesFactory
+    - SJVideoPlayer/ResourceLoader
+  - SJVideoPlayer/ControlLayers (3.4.3):
+    - SJBaseVideoPlayer (>= 3.7.5)
+    - SJVideoPlayer/Common
+  - SJVideoPlayer/ResourceLoader (3.4.3):
+    - SJBaseVideoPlayer (>= 3.7.5)
+  - SnapKit (5.7.1)
+  - SwifterSwift (8.0.0):
+    - SwifterSwift/AppKit (= 8.0.0)
+    - SwifterSwift/AppKitNoIBInspectable (= 8.0.0)
+    - SwifterSwift/CoreAnimation (= 8.0.0)
+    - SwifterSwift/CoreGraphics (= 8.0.0)
+    - SwifterSwift/CoreLocation (= 8.0.0)
+    - SwifterSwift/CryptoKit (= 8.0.0)
+    - SwifterSwift/Dispatch (= 8.0.0)
+    - SwifterSwift/Foundation (= 8.0.0)
+    - SwifterSwift/HealthKit (= 8.0.0)
+    - SwifterSwift/MapKit (= 8.0.0)
+    - SwifterSwift/NoIBInspectable (= 8.0.0)
+    - SwifterSwift/SceneKit (= 8.0.0)
+    - SwifterSwift/SpriteKit (= 8.0.0)
+    - SwifterSwift/StoreKit (= 8.0.0)
+    - SwifterSwift/SwiftStdlib (= 8.0.0)
+    - SwifterSwift/UIKit (= 8.0.0)
+    - SwifterSwift/UIKitNoIBInspectable (= 8.0.0)
+    - SwifterSwift/WebKit (= 8.0.0)
+  - SwifterSwift/AppKit (8.0.0)
+  - SwifterSwift/AppKitNoIBInspectable (8.0.0):
+    - SwifterSwift/AppKit
+  - SwifterSwift/CoreAnimation (8.0.0)
+  - SwifterSwift/CoreGraphics (8.0.0)
+  - SwifterSwift/CoreLocation (8.0.0)
+  - SwifterSwift/CryptoKit (8.0.0)
+  - SwifterSwift/Dispatch (8.0.0)
+  - SwifterSwift/Foundation (8.0.0)
+  - SwifterSwift/HealthKit (8.0.0)
+  - SwifterSwift/MapKit (8.0.0)
+  - SwifterSwift/NoIBInspectable (8.0.0)
+  - SwifterSwift/SceneKit (8.0.0)
+  - SwifterSwift/SpriteKit (8.0.0)
+  - SwifterSwift/StoreKit (8.0.0)
+  - SwifterSwift/SwiftStdlib (8.0.0)
+  - SwifterSwift/UIKit (8.0.0)
+  - SwifterSwift/UIKitNoIBInspectable (8.0.0):
+    - SwifterSwift/UIKit
+  - SwifterSwift/WebKit (8.0.0)
+  - SwiftyJSON (5.0.2)
+  - YYModel (1.0.4)
+
+DEPENDENCIES:
+  - Alamofire
+  - CryptoSwift
+  - FDFullscreenPopGesture
+  - FSPagerView
+  - GKNavigationBarSwift
+  - IQKeyboardManagerSwift
+  - Kingfisher
+  - lottie-ios
+  - SJVideoPlayer
+  - SnapKit
+  - SwifterSwift
+  - SwiftyJSON
+
+SPEC REPOS:
+  trunk:
+    - Alamofire
+    - CryptoSwift
+    - FDFullscreenPopGesture
+    - FSPagerView
+    - GKNavigationBarSwift
+    - IQKeyboardManagerSwift
+    - Kingfisher
+    - lottie-ios
+    - Masonry
+    - SJBaseVideoPlayer
+    - SJUIKit
+    - SJVideoPlayer
+    - SnapKit
+    - SwifterSwift
+    - SwiftyJSON
+    - YYModel
+
+SPEC CHECKSUMS:
+  Alamofire: 7193b3b92c74a07f85569e1a6c4f4237291e7496
+  CryptoSwift: e64e11850ede528a02a0f3e768cec8e9d92ecb90
+  FDFullscreenPopGesture: a8a620179e3d9c40e8e00256dcee1c1a27c6d0f0
+  FSPagerView: 670405b2f18e2a87fa37f20b00de783e562c25a8
+  GKNavigationBarSwift: a7815e2f2b25a3f19b6f6baa49e47a39aa1b2ebd
+  IQKeyboardManagerSwift: 12d89768845bb77b55cc092ecc2b1f9370f06b76
+  Kingfisher: 53a10ea35051a436b5fb626ca2dd8f3144d755e9
+  lottie-ios: e047b1d2e6239b787cc5e9755b988869cf190494
+  Masonry: 678fab65091a9290e40e2832a55e7ab731aad201
+  SJBaseVideoPlayer: b3122de12225b27b71bd9a8a1f08f4dcf2f4e5ec
+  SJUIKit: a40111941e408cc17d4c1c23495aa92999e814b0
+  SJVideoPlayer: 4f09814f58522e0975cb2dccfda925f6c8643467
+  SnapKit: d612e99e678a2d3b95bf60b0705ed0a35c03484a
+  SwifterSwift: 517fa61daf5b4c5e3ed13b9f35f4c26b310cfb97
+  SwiftyJSON: f5b1bf1cd8dd53cd25887ac0eabcfd92301c6a5a
+  YYModel: 2a7fdd96aaa4b86a824e26d0c517de8928c04b30
+
+PODFILE CHECKSUM: 67e9b994bf8e96956d7974b57e3b6a88a375ff08
+
+COCOAPODS: 1.16.2

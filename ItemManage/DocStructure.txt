@@ -1,0 +1,203 @@
+# 项目文件结构设计方案
+
+## 推荐的文件夹结构
+
+```
+MyStorageApp/
+├── Application/          # 应用级文件
+│   ├── AppDelegate.swift
+│   ├── SceneDelegate.swift
+│   ├── AppConfig.swift
+│   └── LaunchScreen.storyboard
+│
+├── Modules/              # 功能模块（按业务划分）
+│   ├── Home/            # 首页模块
+│   │   ├── HomeViewController.swift
+│   │   ├── HomeViewModel.swift
+│   │   ├── HomeView.swift (如果是SwiftUI)
+│   │   └── Components/  # 首页独有组件
+│   │
+│   ├── ItemManagement/  # 物品管理模块
+│   │   ├── AddItem/
+│   │   ├── EditItem/
+│   │   └── ItemList/
+│   │
+│   ├── Category/        # 分类管理模块
+│   ├── Location/        # 位置管理模块
+│   ├── Search/          # 搜索模块
+│   └── Settings/        # 设置模块
+│
+├── Core/                # 核心层
+│   ├── Networking/      # 网络层
+│   │   ├── APIService.swift
+│   │   ├── Endpoints.swift
+│   │   └── Models/
+│   │
+│   ├── Database/        # 数据库层
+│   │   ├── DatabaseManager.swift
+│   │   ├── Entities/
+│   │   └── Migrations/
+│   │
+│   ├── Services/        # 业务服务
+│   │   ├── ImageService.swift
+│   │   ├── NotificationService.swift
+│   │   └── AnalyticsService.swift
+│   │
+│   └── Utilities/       # 工具类
+│       ├── Extensions/
+│       ├── Helpers/
+│       └── Formatters/
+│
+├── Shared/              # 共享资源
+│   ├── Resources/       # 资源文件
+│   │   ├── Assets.xcassets
+│   │   ├── Strings/
+│   │   ├── Colors/
+│   │   └── Fonts/
+│   │
+│   ├── Styles/          # 样式系统（你提到的设计规范）
+│   │   ├── AppStyle.swift
+│   │   ├── ThemeManager.swift
+│   │   ├── Fonts.swift
+│   │   └── Colors.swift
+│   │
+│   ├── Components/      # 通用UI组件
+│   │   ├── Buttons/
+│   │   ├── Cards/
+│   │   ├── Cells/
+│   │   ├── Inputs/
+│   │   └── Loaders/
+│   │
+│   └── Models/          # 共享数据模型
+│       ├── Item.swift
+│       ├── Category.swift
+│       ├── Location.swift
+│       └── Enums/
+│
+├── Features/            # 特性模块（可选的，跨模块功能）
+│   ├── Camera/
+│   ├── BarcodeScanner/
+│   └── ImagePicker/
+│
+└── Supporting Files/    # 项目支持文件
+    ├── Info.plist
+    ├── Launch Screen/
+    └── Project Config/
+```
+
+**每个模块应包含**：
+```
+Home/
+├── View/              # 视图层 (ViewController/View)
+├── ViewModel/         # 视图模型 (ViewModel/Presenter)
+├── Model/             # 该模块专用的数据模型
+├── Router/Coordinator # 路由/导航逻辑
+├── Service/           # 模块专属服务
+└── Tests/             # 模块测试文件
+```
+
+### 2. **核心层**（Core/）
+**具体内容**：
+- **Networking/**: API请求、拦截器、模型映射
+- **Database/**: 本地存储、数据实体、迁移管理
+- **Services/**: 业务无关的通用服务
+- **Utilities/**: 工具函数、扩展方法
+
+### 3. **共享层**（Shared/）
+**具体内容**：
+- **Styles/**: 存放你之前设计的规范
+- **Components/**: 可复用的UI组件
+- **Resources/**: 图片、颜色、字体等资源
+- **Models/**: 共享的数据模型定义
+
+## 具体实现示例
+
+### 1. **Styles 文件夹结构**
+```
+Shared/Styles/
+├── Color/
+│   ├── AppColors.swift      # 颜色定义
+│   ├── ColorExtensions.swift
+│   └── Theme.swift          # 主题管理
+│
+├── Font/
+│   ├── FontSize.swift       # 字号系统
+│   ├── FontFamily.swift
+│   └── FontExtensions.swift
+│
+├── Layout/
+│   ├── Spacing.swift        # 间距系统
+│   ├── CornerRadius.swift   # 圆角系统
+│   ├── Shadow.swift         # 阴影系统
+│   └── IconSize.swift       # 图标尺寸
+│
+├── Components/
+│   ├── ButtonStyle.swift
+│   ├── TextFieldStyle.swift
+│   └── CardStyle.swift
+│
+└── AppStyle.swift          # 样式管理器入口
+```
+
+### 2. **通用组件示例**
+```
+Shared/Components/
+├── Buttons/
+│   ├── PrimaryButton.swift
+│   ├── SecondaryButton.swift
+│   ├── IconButton.swift
+│   └── ButtonStyles.swift
+│
+├── Cards/
+│   ├── ItemCard.swift
+│   ├── CategoryCard.swift
+│   └── LocationCard.swift
+│
+├── Inputs/
+│   ├── TextInputField.swift
+│   ├── SearchBar.swift
+│   └── PickerField.swift
+│
+├── Cells/
+│   ├── ItemTableViewCell.swift
+│   ├── CategoryCollectionCell.swift
+│   └── LocationListCell.swift
+│
+└── Views/
+    ├── EmptyStateView.swift
+    ├── LoadingView.swift
+    └── ErrorView.swift
+```
+
+### 3. **Xcode 中的实际配置**
+
+在 Xcode 中创建 Groups（黄色文件夹），不要使用物理文件夹：
+
+```
+1. 在 Xcode 中右键点击项目
+2. 选择 "New Group"
+3. 创建上述的 Group 结构
+4. 将物理文件拖拽到对应的 Group 中
+```
+
+
+## 文件命名规范
+
+### 1. **ViewController 文件**
+- `HomeViewController.swift`
+- `ItemListViewController.swift`
+- `AddItemViewController.swift`
+
+### 2. **View/Component 文件**
+- `ItemCard.swift`
+- `PrimaryButton.swift`
+- `SearchBar.swift`
+
+### 3. **ViewModel/Presenter 文件**
+- `HomeViewModel.swift`
+- `ItemListPresenter.swift`
+
+### 4. **协议和扩展**
+- `ItemRepositoryProtocol.swift`
+- `UIView+Extensions.swift`
+- `String+Formatting.swift`
