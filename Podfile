@@ -12,6 +12,7 @@ target 'ItemManage' do
 
   # Pods for ItemManage
 
+  pod 'JXSegmentedView'
   # 网络
   pod 'Alamofire'
 

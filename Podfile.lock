@@ -5,6 +5,7 @@ PODS:
   - FSPagerView (0.8.3)
   - GKNavigationBarSwift (1.7.3)
   - IQKeyboardManagerSwift (6.5.16)
+  - JXSegmentedView (1.4.1)
   - Kingfisher (7.12.0)
   - lottie-ios (4.4.1)
   - Masonry (1.1.0)
@@ -117,6 +118,7 @@ DEPENDENCIES:
   - FSPagerView
   - GKNavigationBarSwift
   - IQKeyboardManagerSwift
+  - JXSegmentedView
   - Kingfisher
   - lottie-ios
   - SJVideoPlayer
@@ -132,6 +134,7 @@ SPEC REPOS:
     - FSPagerView
     - GKNavigationBarSwift
     - IQKeyboardManagerSwift
+    - JXSegmentedView
     - Kingfisher
     - lottie-ios
     - Masonry
@@ -150,6 +153,7 @@ SPEC CHECKSUMS:
   FSPagerView: 670405b2f18e2a87fa37f20b00de783e562c25a8
   GKNavigationBarSwift: a7815e2f2b25a3f19b6f6baa49e47a39aa1b2ebd
   IQKeyboardManagerSwift: 12d89768845bb77b55cc092ecc2b1f9370f06b76
+  JXSegmentedView: cd73555ce2134d1656db2cb383ba9c2f36fb5078
   Kingfisher: 53a10ea35051a436b5fb626ca2dd8f3144d755e9
   lottie-ios: e047b1d2e6239b787cc5e9755b988869cf190494
   Masonry: 678fab65091a9290e40e2832a55e7ab731aad201
@@ -161,6 +165,6 @@ SPEC CHECKSUMS:
   SwiftyJSON: f5b1bf1cd8dd53cd25887ac0eabcfd92301c6a5a
   YYModel: 2a7fdd96aaa4b86a824e26d0c517de8928c04b30
 
-PODFILE CHECKSUM: 67e9b994bf8e96956d7974b57e3b6a88a375ff08
+PODFILE CHECKSUM: 4057ee94353a447a5c2a6a96f81ac04bbbebeb03
 
 COCOAPODS: 1.16.2
