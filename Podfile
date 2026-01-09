@@ -12,13 +12,14 @@ target 'ItemManage' do
 
   # Pods for ItemManage
 
+  pod 'JXPagingView/Paging'
   pod 'JXSegmentedView'
   pod 'JXSegmentedViewExt'
   # 网络
   pod 'Alamofire'
 
   # JSON
-  #pod 'HandyJSON'
+  pod 'HandyJSON'
   pod 'SwiftyJSON'
 
   # 图片加载

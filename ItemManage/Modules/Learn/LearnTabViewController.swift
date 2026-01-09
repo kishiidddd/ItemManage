@@ -10,7 +10,7 @@ import UIKit
 import SnapKit
 import JXSegmentedView
 
-class GuideTabViewController: UIViewController{
+class LearnTabViewController: UIViewController{
     let segmentedView = JXSegmentedView()
     var listContainer:JXSegmentedListContainerView!
     
@@ -49,6 +49,7 @@ class GuideTabViewController: UIViewController{
         view.addSubview(segmentedView)
         view.addSubview(listContainer)
         segmentedView.listContainer = listContainer
+        segmentedView.backgroundColor = .blue
         
         segmentedView.backgroundColor = .lightGray.withAlphaComponent(0.3)
     }
@@ -56,7 +57,7 @@ class GuideTabViewController: UIViewController{
     private func setupConstraints(){
         // 布局segmentedView：顶部距离安全区20pt，左右贴边，高度50
         segmentedView.snp.makeConstraints { make in
-            make.top.equalTo(view.safeAreaLayoutGuide).offset(20)
+            make.top.equalTo(view.safeAreaLayoutGuide)
             make.left.right.equalToSuperview()
             make.height.equalTo(50)
         }
@@ -76,12 +77,12 @@ class GuideTabViewController: UIViewController{
 
 }
 
-extension GuideTabViewController:JXSegmentedListContainerViewDataSource{
+extension LearnTabViewController:JXSegmentedListContainerViewDataSource{
     func numberOfLists(in listContainerView: JXSegmentedListContainerView) -> Int {
         return titles.count
     }
     
     func listContainerView(_ listContainerView: JXSegmentedListContainerView, initListAt index: Int) -> any JXSegmentedListContainerViewListDelegate {
-        return ContentListVC(title: titles[index])
+        return LearnCollectionListVC(title: titles[index])
     }
 }
