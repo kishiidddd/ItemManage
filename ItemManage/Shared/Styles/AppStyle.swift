@@ -44,7 +44,7 @@ struct AppStyle{
         
         static let headline = UIFont.systemFont(ofSize: 17, weight: .semibold)
         static let body = UIFont.systemFont(ofSize: 16, weight: .regular)
-        static let subhead = UIFont.systemFont(ofSize: 14, weight: .regular)
+        static let subBody = UIFont.systemFont(ofSize: 14, weight: .regular)
         
         static let caption = UIFont.systemFont(ofSize: 12, weight: .regular)
     }
