@@ -31,7 +31,7 @@ class MainTabBarController: UITabBarController {
     }
     
     private func setupViewControllers() {
-        let homeVC = HomeTabViewController()
+        let homeVC = HomeViewController()
         let categoryVC = CategoryTabViewController()
         let guideVC = LearnTabViewController()
         

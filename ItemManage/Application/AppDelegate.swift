@@ -41,7 +41,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // 标记已经启动过
         AppDelegate.isGuideFirst = false
         
-        let mainTabBarController = MainTabBarController()
+        let mainTabBarController = MainTabBarController()//testWebViewController()//
         window?.rootViewController = mainTabBarController
         
         // 添加转场动画

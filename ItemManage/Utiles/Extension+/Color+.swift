@@ -83,10 +83,26 @@ extension UIColor {
         UIColor(hex: "#DC583B")
     }
     
-    /// 主体棕色
+    /// 主题棕色
     static var themeBrownColor: UIColor {
         UIColor(hex: "#824A11")
     }
+    
+    /// 主题蓝色
+    static var themeBlueColor: UIColor {
+        UIColor(hex: "#348AF8")
+    }
+    
+    /// 黄色
+    static var yellowColor: UIColor {
+        UIColor(hex: "#FFB624")
+    }
+    
+    /// 浅蓝色
+    static var lightBlueColor: UIColor {
+        UIColor(hex: "#35CBFF")
+    }
+    
     
     /// 粽黑色文字
     static var text1Color: UIColor {
@@ -99,8 +115,13 @@ extension UIColor {
     }
     
     ///米色弹框背景
-    static var ThemeBeigeColor : UIColor {
+    static var themeBeigeColor : UIColor {
         UIColor(hex: "#FFE5C3")
+    }
+    
+    ///米色弹框背景
+    static var lightGrayBgColor : UIColor {
+        UIColor(hex: "#F6F7F9")
     }
     
     ///F9F6ED
