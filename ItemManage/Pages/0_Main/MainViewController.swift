@@ -9,8 +9,14 @@ import UIKit
 import SnapKit
 import Kingfisher
 import Foundation
+import Combine
+
 
 class MainViewController: UIViewController {
+    let viewModel = SearchViewModel()
+    
+    private var isSearching = false
+    private var cancellables = Set<AnyCancellable>()
 
     private lazy var homeTopView: HomeTopView = {
         let view = HomeTopView()
@@ -27,14 +33,63 @@ class MainViewController: UIViewController {
     }()
 
     private lazy var messageScrollView = HomeMessageScrollView()
+    
+    // ✅ 普通模式下的搜索框
+    private lazy var normalSearchView = HomeSearchView()
+    
+    // ✅ 搜索模式下的搜索框（在顶部容器中）
     private lazy var searchView = HomeSearchView()
+    
     private lazy var itemsView = HomeItemsView()
+
+    // 顶部搜索容器（用于吸顶）
+    private lazy var searchContainer: UIView = {
+        let view = UIView()
+        view.backgroundColor = .text1Color.withAlphaComponent(0.3)
+        view.isHidden = true
+        return view
+    }()
+
+    // 搜索结果列表
+    private lazy var searchTableView: UITableView = {
+        let tv = UITableView()
+        tv.register(HomeItemCell.self, forCellReuseIdentifier: HomeItemCell.identifier)
+        tv.delegate = self
+        tv.dataSource = self
+        tv.isHidden = true
+        tv.backgroundColor = .text1Color.withAlphaComponent(0.3)
+        return tv
+    }()
 
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
         setupConstraints()
         setupTapBack()
+        setupBinding()
+        setupSearchAction()
+        setupTableViewBackground()
+        
+    }
+
+    
+    private func setupBinding() {
+        // 两个搜索框共用同一个回调
+        let textChangeHandler: (String) -> Void = { [weak self] text in
+            self?.viewModel.searchText = text
+        }
+        
+        normalSearchView.onTextChange = textChangeHandler
+        searchView.onTextChange = textChangeHandler
+        
+        // ViewModel → UI（刷新列表）
+        viewModel.$filteredItems
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] items in
+                print("搜索结果：\(items.map { $0.name })")
+                self?.searchTableView.reloadData()
+            }
+            .store(in: &cancellables)
     }
     
     private func setupTapBack(){
@@ -48,12 +103,21 @@ class MainViewController: UIViewController {
         view.addSubview(homeTopView)
         view.addSubview(grayBg)
         view.addSubview(messageScrollView)
-        view.addSubview(searchView)
+        
+        // ✅ 添加普通模式的搜索框
+        view.addSubview(normalSearchView)
+        
         view.addSubview(itemsView)
+        
+        // 搜索模式相关的视图
+        view.addSubview(searchContainer)
+        view.addSubview(searchTableView)
+        
+        // 把搜索模式的 searchView 添加到 container 中
+        searchContainer.addSubview(searchView)
     }
 
     private func setupConstraints(){
-
         homeTopView.snp.makeConstraints{ make in
             make.top.left.right.equalToSuperview()
             make.height.equalTo(320)
@@ -71,7 +135,8 @@ class MainViewController: UIViewController {
             make.height.equalTo(104)
         }
 
-        searchView.snp.makeConstraints { make in
+        // ✅ 普通搜索框的约束
+        normalSearchView.snp.makeConstraints { make in
             make.top.equalTo(messageScrollView.snp.bottom).offset(16)
             make.left.equalToSuperview().offset(16)
             make.right.equalToSuperview().offset(-16)
@@ -79,15 +144,103 @@ class MainViewController: UIViewController {
         }
 
         itemsView.snp.makeConstraints { make in
-            make.top.equalTo(searchView.snp.bottom).offset(16)
+            make.top.equalTo(normalSearchView.snp.bottom).offset(16)
             make.left.equalToSuperview().offset(16)
             make.right.equalToSuperview().offset(-16)
             make.bottom.equalToSuperview()
         }
 
+        // 搜索容器的约束
+        searchContainer.snp.makeConstraints { make in
+            make.top.left.right.equalToSuperview()
+            make.height.equalTo(108)
+        }
 
+        // ✅ 搜索模式下的搜索框约束
+        searchView.snp.makeConstraints { make in
+            make.left.equalToSuperview().offset(16)
+            make.right.equalToSuperview().offset(-16)
+            make.bottom.equalToSuperview()
+            make.height.equalTo(48)
+        }
+
+        // 搜索结果列表的约束
+        searchTableView.snp.makeConstraints { make in
+            make.top.equalTo(searchContainer.snp.bottom)
+            make.left.right.bottom.equalToSuperview()
+        }
+    }
+    
+    private func setupSearchAction() {
+        normalSearchView.onBeginEditing = { [weak self] in
+            self?.enterSearchMode()
+        }
+    }
+
+    private func setupTableViewBackground() {
+        let backgroundView = UIView()
+        backgroundView.backgroundColor = .clear
+        
+        let tap = UITapGestureRecognizer(target: self, action: #selector(exitSearchMode))
+        backgroundView.addGestureRecognizer(tap)
+        
+        searchTableView.backgroundView = backgroundView
+    }
+    
+    private func enterSearchMode() {
+        guard !isSearching else { return }
+        isSearching = true
+        
+        //清空
+        searchView.text = ""
+        viewModel.searchText = ""
+        
+        // ✅ 显示搜索模式相关视图
+        searchContainer.isHidden = false
+        searchTableView.isHidden = false
+        
+        // ✅ 让搜索模式的搜索框成为第一响应者
+        DispatchQueue.main.async { [weak self] in
+            let success = self?.searchView.becomeFirstResponder() ?? false
+            print("searchView.becomeFirstResponder() 结果: \(success)")
+        }
 
     }
 
+    @objc private func exitSearchMode() {
+        guard isSearching else { return }
+        isSearching = false
+        
+        view.endEditing(true)
+        
+        // ✅ 隐藏搜索模式相关视图
+        searchContainer.isHidden = true
+        searchTableView.isHidden = true
+        
+        // ✅ 显示普通搜索框
+        normalSearchView.isHidden = false
+        
+        //清空
+        searchView.text = ""
+        viewModel.searchText = ""
+        
+    }
 }
 
+extension MainViewController: UITableViewDataSource, UITableViewDelegate {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return viewModel.filteredItems.count
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(
+            withIdentifier: HomeItemCell.identifier,
+            for: indexPath
+        ) as! HomeItemCell
+        
+        let item = viewModel.filteredItems[indexPath.row]
+        cell.configure(with: item)
+        
+        return cell
+    }
+}

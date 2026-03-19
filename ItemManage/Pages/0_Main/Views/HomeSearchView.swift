@@ -9,6 +9,13 @@ import UIKit
 import SnapKit
 
 class HomeSearchView: UIView {
+    var text: String? {
+        get { return textField.text }
+        set { textField.text = newValue }
+    }
+    
+    var onBeginEditing: (() -> Void)?
+    var onTextChange: ((String) -> Void)?
     
     // MARK: - UI
     
@@ -40,6 +47,9 @@ class HomeSearchView: UIView {
                 .foregroundColor: UIColor.lightGray
             ]
         )
+        
+        field.addTarget(self, action: #selector(beginEdit), for: .editingDidBegin)
+        field.addTarget(self, action: #selector(textDidChange), for: .editingChanged)
         
         field.clearButtonMode = .whileEditing
         
@@ -95,8 +105,17 @@ class HomeSearchView: UIView {
         textField.placeholder = text
     }
     
-    func becomeFirstResponder() {
-        textField.becomeFirstResponder()
+    @discardableResult
+    override func becomeFirstResponder() -> Bool {
+        return textField.becomeFirstResponder()
+    }
+    
+    @objc private func beginEdit() {
+        onBeginEditing?()
+    }
+    
+    @objc private func textDidChange() {
+        onTextChange?(textField.text ?? "")
     }
 }
 
