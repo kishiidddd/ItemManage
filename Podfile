@@ -34,20 +34,12 @@ target 'ItemManage' do
   # 动画
   pod 'lottie-ios'
 
-  # 全屏返回
-  pod 'FDFullscreenPopGesture'
-
-  # 导航栏美化
-  pod 'GKNavigationBarSwift'
-
-  # 视频播放器
-  pod 'SJVideoPlayer'
-
   # Swift 常用扩展
   pod 'SwifterSwift'
 
-  # 加密工具
-  pod 'CryptoSwift'
+  #日历相关
+  pod 'LunarSwift'
+
 
   #键盘
   pod 'IQKeyboardManagerSwift'
