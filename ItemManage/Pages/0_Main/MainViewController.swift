@@ -204,6 +204,8 @@ class MainViewController: UIViewController {
         guard !isSearching else { return }
         isSearching = true
         
+        self.tabBarController?.tabBar.isHidden = true
+        
         //清空
         searchView.text = ""
         viewModel.searchText = ""
@@ -223,6 +225,8 @@ class MainViewController: UIViewController {
     @objc private func exitSearchMode() {
         guard isSearching else { return }
         isSearching = false
+        
+        self.tabBarController?.tabBar.isHidden = false
         
         view.endEditing(true)
         
@@ -255,5 +259,18 @@ extension MainViewController: UITableViewDataSource, UITableViewDelegate {
         cell.configure(with: item)
         
         return cell
+    }
+    
+    // 添加这个方法处理搜索结果点击
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
+        
+        let item = viewModel.filteredItems[indexPath.row]
+        
+        // 弹出详情卡片（覆盖整个屏幕，包括搜索模式）
+        let popup = ItemDetailPopupViewController(item: item)
+        popup.modalPresentationStyle = .overFullScreen
+        popup.modalTransitionStyle = .crossDissolve
+        present(popup, animated: true)
     }
 }
