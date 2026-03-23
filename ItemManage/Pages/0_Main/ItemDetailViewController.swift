@@ -422,6 +422,7 @@ class ItemDetailPopupViewController: UIViewController {
     
     // MARK: - Properties
     private let item: ItemModel
+    private let repository = ItemRepository.shared
     
     // MARK: - UI Elements
     // 卡片容器
@@ -785,20 +786,56 @@ class ItemDetailPopupViewController: UIViewController {
     }
     
     private func deleteItem() {
-        ItemDataService.shared.deleteItem(id: item.id) { [weak self] result in
-            DispatchQueue.main.async {
-                switch result {
-                case .success:
-                    NotificationCenter.default.post(name: NSNotification.Name("ItemDeleted"), object: self?.item.id)
-                    self?.dismiss(animated: true)
-                case .failure(let error):
-                    let alert = UIAlertController(title: "提示", message: error.localizedDescription, preferredStyle: .alert)
-                    alert.addAction(UIAlertAction(title: "确定", style: .default))
-                    self?.present(alert, animated: true)
-                }
-            }
-        }
+        // 直接通过 Repository 删除
+        repository.deleteItem(id: item.id)
+        
+        // 发送通知（可选，因为 Repository 的 @Published 会自动触发 UI 更新）
+        NotificationCenter.default.post(name: NSNotification.Name("ItemDeleted"), object: item.id)
+        
+        // 关闭弹窗
+        dismiss(animated: true)
     }
+    
+//    @objc private func editButtonTapped() {
+//        dismiss(animated: true) { [weak self] in
+//            guard let item = self?.item else { return }
+//            let editVC = AddItemViewController(item: item)
+//            if let topVC = UIApplication.shared.keyWindow?.rootViewController?.topMostViewController() {
+//                topVC.navigationController?.pushViewController(editVC, animated: true)
+//            }
+//        }
+//    }
+//    
+//    @objc private func deleteButtonTapped() {
+//        let alert = UIAlertController(
+//            title: "删除物品",
+//            message: "确定要删除「\(item.name)」吗？此操作不可撤销。",
+//            preferredStyle: .alert
+//        )
+//        
+//        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+//        alert.addAction(UIAlertAction(title: "删除", style: .destructive) { [weak self] _ in
+//            self?.deleteItem()
+//        })
+//        
+//        present(alert, animated: true)
+//    }
+//    
+//    private func deleteItem() {
+//        ItemDataService.shared.deleteItem(id: item.id) { [weak self] result in
+//            DispatchQueue.main.async {
+//                switch result {
+//                case .success:
+//                    NotificationCenter.default.post(name: NSNotification.Name("ItemDeleted"), object: self?.item.id)
+//                    self?.dismiss(animated: true)
+//                case .failure(let error):
+//                    let alert = UIAlertController(title: "提示", message: error.localizedDescription, preferredStyle: .alert)
+//                    alert.addAction(UIAlertAction(title: "确定", style: .default))
+//                    self?.present(alert, animated: true)
+//                }
+//            }
+//        }
+//    }
 }
 
 // MARK: - InfoRow 自定义视图

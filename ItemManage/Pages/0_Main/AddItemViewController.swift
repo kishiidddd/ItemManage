@@ -8,6 +8,7 @@ class AddItemViewController: UIViewController {
     // MARK: - Properties
     weak var delegate: AddItemViewControllerDelegate?
     private let viewModel: AddItemViewModel
+    private let repository = ItemRepository.shared 
     private var activeTextField: UITextField?
     private var cancellables = Set<AnyCancellable>()  // 添加 Combine 取消集
     
@@ -493,11 +494,32 @@ class AddItemViewController: UIViewController {
         }
         
         // 修改 saveButtonTapped 方法
+//        @objc private func saveButtonTapped() {
+//            viewModel.saveItem { [weak self] result in
+//                DispatchQueue.main.async {
+//                    switch result {
+//                    case .success(let item):
+//                        self?.delegate?.addItemViewControllerDidSave(self!, item: item)
+//                        self?.navigationController?.popViewController(animated: true)
+//                    case .failure(let error):
+//                        self?.showError(error.localizedDescription)
+//                    }
+//                }
+//            }
+//        }
+    
         @objc private func saveButtonTapped() {
             viewModel.saveItem { [weak self] result in
                 DispatchQueue.main.async {
                     switch result {
                     case .success(let item):
+                        // 通过 Repository 添加或更新
+                        if self?.viewModel.isEditing == true {
+                            self?.repository.updateItem(item)
+                        } else {
+                            self?.repository.addItem(item)
+                        }
+                        
                         self?.delegate?.addItemViewControllerDidSave(self!, item: item)
                         self?.navigationController?.popViewController(animated: true)
                     case .failure(let error):
