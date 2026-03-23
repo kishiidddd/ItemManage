@@ -554,298 +554,212 @@ class MockDataService {
         
         // ===== 第一组层级：水果类 =====
         // 第一级：水果分类（父物品）
-        let fruitCategory = createItem(
+        // ===== 第一组层级：卧室 =====
+        // 第一级：衣柜
+        let wardrobe = createItem(
             id: "1",
-            name: "水果分类",
-            categoryId: "1",
+            name: "衣柜",
+            categoryId: "location",
             quantity: 0,
             totalPrice: nil,
             level: 1,
             parentId: nil
         )
-        fruitCategory.remarks = "水果大类"
-        items.append(fruitCategory)
-        
-        // 第二级：苹果子类
-        let appleCategory = createItem(
+        wardrobe.remarks = "主卧大衣柜"
+        items.append(wardrobe)
+
+        // 第二级：粉色箱子
+        let pinkBox = createItem(
             id: "1-1",
-            name: "苹果类",
-            categoryId: "1",
+            name: "粉色箱子",
+            categoryId: "location",
             quantity: 0,
             totalPrice: nil,
             level: 2,
             parentId: "1"
         )
-        appleCategory.remarks = "各种苹果"
-        items.append(appleCategory)
-        
-        // 第三级：具体苹果品种
-        let redApple = createItem(
+        pinkBox.remarks = "放在衣柜上层"
+        items.append(pinkBox)
+
+        // 第三级：白色短袖
+        let whiteShirt = createItem(
             id: "1-1-1",
-            name: "红富士苹果",
-            categoryId: "1",
+            name: "白色短袖",
+            categoryId: "clothing",
+            quantity: 3,
+            totalPrice: 120.0,
+            unitId: "1",
+            expiryDays: nil,
+            createdDaysAgo: 5,
+            level: 3,
+            parentId: "1-1"
+        )
+        whiteShirt.remarks = "纯棉白色T恤"
+        items.append(whiteShirt)
+
+        // 第二级：抽屉
+        let drawer = createItem(
+            id: "1-2",
+            name: "抽屉",
+            categoryId: "location",
+            quantity: 0,
+            totalPrice: nil,
+            level: 2,
+            parentId: "1"
+        )
+        drawer.remarks = "衣柜下层抽屉"
+        items.append(drawer)
+
+        // 第三级：袜子
+        let socks = createItem(
+            id: "1-2-1",
+            name: "袜子",
+            categoryId: "clothing",
             quantity: 10,
             totalPrice: 50.0,
             unitId: "1",
-            expiryDays: 14,
-            createdDaysAgo: 2,
-            level: 3,
-            parentId: "1-1"
-        )
-        redApple.remarks = "山东烟台红富士"
-        items.append(redApple)
-        
-        let greenApple = createItem(
-            id: "1-1-2",
-            name: "青苹果",
-            categoryId: "1",
-            quantity: 8,
-            totalPrice: 40.0,
-            unitId: "1",
-            expiryDays: 10,
-            createdDaysAgo: 3,
-            level: 3,
-            parentId: "1-1"
-        )
-        greenApple.remarks = "酸甜可口"
-        items.append(greenApple)
-        
-        let galaApple = createItem(
-            id: "1-1-3",
-            name: "嘎啦苹果",
-            categoryId: "1",
-            quantity: 6,
-            totalPrice: 36.0,
-            unitId: "1",
-            expiryDays: 12,
-            createdDaysAgo: 1,
-            level: 3,
-            parentId: "1-1"
-        )
-        galaApple.remarks = "进口嘎啦"
-        items.append(galaApple)
-        
-        // 第二级：梨子子类
-        let pearCategory = createItem(
-            id: "1-2",
-            name: "梨类",
-            categoryId: "1",
-            quantity: 0,
-            totalPrice: nil,
-            level: 2,
-            parentId: "1"
-        )
-        items.append(pearCategory)
-        
-        // 第三级：具体梨品种
-        let snowPear = createItem(
-            id: "1-2-1",
-            name: "雪梨",
-            categoryId: "1",
-            quantity: 5,
-            totalPrice: 25.0,
-            unitId: "1",
-            expiryDays: 15,
-            createdDaysAgo: 4,
+            expiryDays: nil,
+            createdDaysAgo: 20,
             level: 3,
             parentId: "1-2"
         )
-        items.append(snowPear)
-        
-        let crystalPear = createItem(
-            id: "1-2-2",
-            name: "水晶梨",
-            categoryId: "1",
-            quantity: 4,
-            totalPrice: 28.0,
-            unitId: "1",
-            expiryDays: 12,
-            createdDaysAgo: 2,
-            level: 3,
-            parentId: "1-2"
-        )
-        items.append(crystalPear)
-        
-        // ===== 第二组层级：饮品 =====
-        // 第一级：饮品分类
-        let drinkCategory = createItem(
+        socks.remarks = "白色运动袜"
+        items.append(socks)
+
+        // ===== 第二组层级：厨房 =====
+        // 第一级：冰箱
+        let fridge = createItem(
             id: "2",
-            name: "饮品分类",
-            categoryId: "2",
+            name: "冰箱",
+            categoryId: "location",
             quantity: 0,
             totalPrice: nil,
             level: 1,
             parentId: nil
         )
-        items.append(drinkCategory)
-        
-        // 第二级：牛奶子类
-        let milkCategory = createItem(
+        items.append(fridge)
+
+        // 第二级：冷藏层
+        let fridgeUpper = createItem(
             id: "2-1",
-            name: "牛奶",
-            categoryId: "2",
+            name: "冷藏层",
+            categoryId: "location",
             quantity: 0,
             totalPrice: nil,
             level: 2,
             parentId: "2"
         )
-        items.append(milkCategory)
-        
-        // 第三级：具体牛奶产品
-        let pureMilk = createItem(
+        items.append(fridgeUpper)
+
+        // 第三级：鸡蛋
+        let eggs = createItem(
             id: "2-1-1",
-            name: "纯牛奶",
-            categoryId: "2",
+            name: "鸡蛋",
+            categoryId: "food",
+            quantity: 12,
+            totalPrice: 18.0,
+            unitId: "1",
+            expiryDays: 14,
+            createdDaysAgo: 2,
+            level: 3,
+            parentId: "2-1"
+        )
+        items.append(eggs)
+
+        // 第二级：冷冻层
+        let fridgeFreezer = createItem(
+            id: "2-2",
+            name: "冷冻层",
+            categoryId: "location",
+            quantity: 0,
+            totalPrice: nil,
+            level: 2,
+            parentId: "2"
+        )
+        items.append(fridgeFreezer)
+
+        // 第三级：速冻水饺
+        let dumplings = createItem(
+            id: "2-2-1",
+            name: "速冻水饺",
+            categoryId: "food",
             quantity: 2,
             totalPrice: 30.0,
             unitId: "2",
-            expiryDays: 10,
-            createdDaysAgo: 1,
-            level: 3,
-            parentId: "2-1"
-        )
-        pureMilk.remarks = "全脂纯牛奶"
-        items.append(pureMilk)
-        
-        let yogurt = createItem(
-            id: "2-1-2",
-            name: "酸奶",
-            categoryId: "2",
-            quantity: 4,
-            totalPrice: 32.0,
-            unitId: "2",
-            expiryDays: 14,
-            createdDaysAgo: 7,
-            level: 3,
-            parentId: "2-1"
-        )
-        yogurt.remarks = "原味酸奶"
-        items.append(yogurt)
-        
-        // 第二级：果汁子类
-        let juiceCategory = createItem(
-            id: "2-2",
-            name: "果汁",
-            categoryId: "2",
-            quantity: 0,
-            totalPrice: nil,
-            level: 2,
-            parentId: "2"
-        )
-        items.append(juiceCategory)
-        
-        // 第三级：具体果汁
-        let orangeJuice = createItem(
-            id: "2-2-1",
-            name: "橙汁",
-            categoryId: "2",
-            quantity: 3,
-            totalPrice: 45.0,
-            unitId: "4",
-            expiryDays: 20,
-            createdDaysAgo: 5,
+            expiryDays: 90,
+            createdDaysAgo: 15,
             level: 3,
             parentId: "2-2"
         )
-        items.append(orangeJuice)
-        
-        // ===== 第三组层级：零食 =====
-        // 第一级：零食分类
-        let snackCategory = createItem(
+        items.append(dumplings)
+
+        // 第一级：橱柜
+        let cabinet = createItem(
             id: "3",
-            name: "零食分类",
-            categoryId: "3",
+            name: "橱柜",
+            categoryId: "location",
             quantity: 0,
             totalPrice: nil,
             level: 1,
             parentId: nil
         )
-        items.append(snackCategory)
-        
-        // 第二级：薯片子类
-        let chipsCategory = createItem(
+        items.append(cabinet)
+
+        // 第二级：上层橱柜
+        let upperCabinet = createItem(
             id: "3-1",
-            name: "薯片",
-            categoryId: "3",
+            name: "上层橱柜",
+            categoryId: "location",
             quantity: 0,
             totalPrice: nil,
             level: 2,
             parentId: "3"
         )
-        items.append(chipsCategory)
-        
-        // 第三级：具体薯片
-        let potatoChips = createItem(
+        items.append(upperCabinet)
+
+        // 第三级：方便面
+        let instantNoodles = createItem(
             id: "3-1-1",
-            name: "薯片（原味）",
-            categoryId: "3",
+            name: "方便面",
+            categoryId: "food",
+            quantity: 5,
+            totalPrice: 25.0,
+            unitId: "3",
+            expiryDays: 180,
+            createdDaysAgo: 30,
+            level: 3,
+            parentId: "3-1"
+        )
+        items.append(instantNoodles)
+
+        // ===== 第三组：独立位置（只有一级）=====
+        // 鞋柜
+        let shoeCabinet = createItem(
+            id: "4",
+            name: "鞋柜",
+            categoryId: "location",
+            quantity: 0,
+            totalPrice: nil,
+            level: 1,
+            parentId: nil
+        )
+        items.append(shoeCabinet)
+
+        // 第二级：运动鞋
+        let sportsShoes = createItem(
+            id: "4-1",
+            name: "运动鞋",
+            categoryId: "shoes",
             quantity: 2,
-            totalPrice: 18.0,
-            unitId: "3",
-            expiryDays: 30,
-            createdDaysAgo: 10,
-            level: 3,
-            parentId: "3-1"
-        )
-        items.append(potatoChips)
-        
-        let bbqChips = createItem(
-            id: "3-1-2",
-            name: "薯片（烧烤味）",
-            categoryId: "3",
-            quantity: 1,
-            totalPrice: 9.0,
-            unitId: "3",
-            expiryDays: 28,
-            createdDaysAgo: 8,
-            level: 3,
-            parentId: "3-1"
-        )
-        items.append(bbqChips)
-        
-        // ===== 第四组：独立物品（没有子物品）=====
-        let shampoo = createItem(
-            id: "7",
-            name: "洗发水",
-            categoryId: "4",
-            quantity: 1,
-            totalPrice: 45.0,
-            unitId: "4",
-            expiryDays: 365,
-            createdDaysAgo: 15,
-            level: 1,
-            parentId: nil
-        )
-        shampoo.remarks = "去屑洗发水"
-        items.append(shampoo)
-        
-        let tomato = createItem(
-            id: "8",
-            name: "西红柿",
-            categoryId: "5",
-            quantity: 6,
-            totalPrice: 15.0,
+            totalPrice: 500.0,
             unitId: "1",
-            expiryDays: 5,
-            createdDaysAgo: 1,
-            level: 1,
-            parentId: nil
+            expiryDays: nil,
+            createdDaysAgo: 30,
+            level: 2,
+            parentId: "4"
         )
-        items.append(tomato)
-        
-        let cucumber = createItem(
-            id: "9",
-            name: "黄瓜",
-            categoryId: "5",
-            quantity: 3,
-            totalPrice: 9.0,
-            unitId: "1",
-            expiryDays: 4,
-            createdDaysAgo: 2,
-            level: 1,
-            parentId: nil
-        )
-        items.append(cucumber)
+        items.append(sportsShoes)
+            ////
         
         // 建立父子关系（设置 parent 引用）
         for item in items {
