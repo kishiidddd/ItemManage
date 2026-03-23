@@ -11,8 +11,10 @@ class AddItemViewModel {
     @Published var selectedUnit: UnitModel?
     @Published var photos: [PhotoModel] = []
     
+    // 日期相关字段
     @Published var productionDate: Date?
     @Published var expiryDate: Date?
+    @Published var shelfLife: Int?  // 新增：保质期（天数）
     
     @Published var selectedReminderRule: ReminderRuleModel?
     @Published var customReminderDays: Int?
@@ -30,8 +32,7 @@ class AddItemViewModel {
     
     // MARK: - 验证状态
     @Published var nameError: String?
-    @Published var categoryError: String?
-    @Published var isFormValid: Bool = false
+    @Published var isFormValid: Bool = false  // 只有名称是必填的
     
     // 当前编辑的日期字段
     var activeDateField: DateField?
@@ -40,7 +41,7 @@ class AddItemViewModel {
         case production, expiry
     }
     
-    // MARK: - 计算属性（非 @Published，但可以通过其他 @Published 派生）
+    // MARK: - 计算属性
     var displayPrice: Double? {
         return Double(totalPrice)
     }
@@ -78,16 +79,16 @@ class AddItemViewModel {
     
     // MARK: - Setup
     private func setupValidation() {
-        // 使用 Combine 监听表单验证
-        Publishers.CombineLatest($name, $selectedCategory)
-            .map { name, category in
-                return !name.isEmpty && category != nil
+        // 只验证名称是否为空
+        $name
+            .map { name -> Bool in
+                return !name.isEmpty
             }
             .assign(to: &$isFormValid)
         
         // 实时验证名称
         $name
-            .dropFirst()  // 跳过初始值
+            .dropFirst()
             .map { name -> String? in
                 if name.isEmpty {
                     return "请输入物品名称"
@@ -96,25 +97,17 @@ class AddItemViewModel {
             }
             .assign(to: &$nameError)
         
-        // 实时验证分类
-        $selectedCategory
-            .dropFirst()
-            .map { category -> String? in
-                if category == nil {
-                    return "请选择分类"
-                }
-                return nil
-            }
-            .assign(to: &$categoryError)
-        
-        // 监听日期变化，验证逻辑
+        // 监听日期变化，验证逻辑（如果有过期日期和生产日期）
         Publishers.CombineLatest($productionDate, $expiryDate)
             .sink { [weak self] production, expiry in
                 guard let production = production, let expiry = expiry else { return }
                 if expiry < production {
                     self?.errorMessage = "过期日期不能早于生产日期"
                 } else {
-                    self?.errorMessage = nil
+                    // 只有当错误消息是日期验证错误时才清除
+                    if self?.errorMessage == "过期日期不能早于生产日期" {
+                        self?.errorMessage = nil
+                    }
                 }
             }
             .store(in: &cancellables)
@@ -155,7 +148,6 @@ class AddItemViewModel {
     }
     
     private func loadEditingItem(id: String) {
-        // 这里应该从数据服务加载完整的 item 数据
         ItemDataService.shared.getItem(id: id) { [weak self] result in
             switch result {
             case .success(let item):
@@ -177,6 +169,7 @@ class AddItemViewModel {
         photos = item.photos
         productionDate = item.productionDate
         expiryDate = item.expiryDate
+        shelfLife = item.shelfLife  // 加载保质期
         selectedReminderRule = reminderRules.first { $0.id == item.reminder.ruleId }
         customReminderDays = item.reminder.daysBefore
         remarks = item.remarks ?? ""
@@ -218,44 +211,64 @@ class AddItemViewModel {
     // MARK: - 日期管理
     func setProductionDate(_ date: Date) {
         productionDate = date
+        // 如果同时有生产日期和保质期，自动计算过期日期
+        if let shelfLife = shelfLife {
+            expiryDate = Calendar.current.date(byAdding: .day, value: shelfLife, to: date)
+        }
     }
     
     func setExpiryDate(_ date: Date) {
         expiryDate = date
     }
     
+    func setShelfLife(_ days: Int) {
+        shelfLife = days
+        // 如果同时有生产日期和保质期，自动计算过期日期
+        if let productionDate = productionDate {
+            expiryDate = Calendar.current.date(byAdding: .day, value: days, to: productionDate)
+        }
+    }
+    
     // MARK: - 提交表单
     func saveItem(completion: @escaping (Result<ItemModel, Error>) -> Void) {
-        guard isFormValid else {
-            completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "表单验证失败"])))
+        // 只验证名称
+        guard !name.isEmpty else {
+            completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "请填写物品名称"])))
             return
         }
         
         isLoading = true
         
         // 构建请求数据
-        let newItem = ItemModel()
-        newItem.name = name
-        newItem.categoryId = selectedCategory?.id ?? ""
-        newItem.quantity = quantity
-        newItem.totalPrice = displayPrice
-        newItem.unitId = selectedUnit?.id
-        newItem.photos = photos
-        newItem.productionDate = productionDate
-        newItem.expiryDate = expiryDate
-        newItem.remarks = remarks.isEmpty ? nil : remarks
+        let request = CreateItemRequest()
+        request.name = name
+        request.categoryId = selectedCategory?.id ?? ""
+        request.quantity = quantity
+        request.totalPrice = displayPrice
+        request.unitId = selectedUnit?.id
+        request.productionDate = productionDate
+        request.expiryDate = expiryDate
+        request.shelfLife = shelfLife  // 添加保质期
+        request.remarks = remarks.isEmpty ? nil : remarks
+        request.level = 3
         
-        // 设置提醒
+        // 处理提醒设置
         if let rule = selectedReminderRule {
-            newItem.reminder.ruleId = rule.id
-            newItem.reminder.rule = rule
+            request.reminder = [
+                "ruleId": rule.id,
+                "daysBefore": rule.daysBefore ?? NSNull()
+            ]
         }
         
         if let days = customReminderDays {
-            newItem.reminder.daysBefore = days
+            if request.reminder == nil {
+                request.reminder = [:]
+            }
+            request.reminder?["daysBefore"] = days
         }
         
-        let request = CreateItemRequest(from: newItem)
+        // 处理照片
+        request.photos = photos.compactMap { $0.url.isEmpty ? nil : $0.url }
         
         ItemDataService.shared.createItem(request) { [weak self] result in
             DispatchQueue.main.async {
@@ -275,10 +288,10 @@ class AddItemViewModel {
         photos = []
         productionDate = nil
         expiryDate = nil
+        shelfLife = nil
         selectedReminderRule = nil
         customReminderDays = nil
         remarks = ""
         errorMessage = nil
     }
 }
-

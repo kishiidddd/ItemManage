@@ -55,7 +55,7 @@ class AddItemViewController: UIViewController {
     
     private lazy var categoryField: CustomPickerField = {
         let field = CustomPickerField()
-        field.configure(title: "分类", placeholder: "请选择分类", isRequired: true)
+        field.configure(title: "分类", placeholder: "请选择分类", isRequired: false)
         field.addTarget(self, action: #selector(categoryTapped), for: .touchUpInside)
         return field
     }()
@@ -105,6 +105,19 @@ class AddItemViewController: UIViewController {
     private lazy var timeSectionView: SectionView = {
         let view = SectionView(title: "时效信息")
         return view
+    }()
+    
+    // 在时效信息 Section 中添加保质期字段
+    private lazy var shelfLifeField: CustomTextField = {
+        let field = CustomTextField()
+        field.configure(
+            title: "保质期",
+            placeholder: "请输入天数（选填）",
+            keyboardType: .numberPad
+        )
+        field.textField.delegate = self
+        field.textField.addTarget(self, action: #selector(shelfLifeFieldChanged), for: .editingChanged)
+        return field
     }()
     
     private lazy var productionDateField: CustomDateField = {
@@ -249,6 +262,8 @@ class AddItemViewController: UIViewController {
         stackView.addArrangedSubview(timeSectionView)
         timeSectionView.contentStack.addArrangedSubview(productionDateField)
         timeSectionView.contentStack.addArrangedSubview(createSeparator())
+        timeSectionView.contentStack.addArrangedSubview(shelfLifeField)  // 添加保质期字段
+            timeSectionView.contentStack.addArrangedSubview(createSeparator())
         timeSectionView.contentStack.addArrangedSubview(expiryDateField)
         
         // 过期提醒 Section
@@ -300,6 +315,14 @@ class AddItemViewController: UIViewController {
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
         tapGesture.cancelsTouchesInView = false
         view.addGestureRecognizer(tapGesture)
+    }
+    
+    // 添加保质期变化处理方法
+    @objc private func shelfLifeFieldChanged() {
+        let text = shelfLifeField.getText()
+        if let days = Int(text),days > 0 {
+            viewModel.setShelfLife(days)
+        }
     }
     
     
@@ -405,7 +428,19 @@ class AddItemViewController: UIViewController {
                 }
                 .store(in: &cancellables)
             
-            // 监听生产日期
+            // 监听保质期变化
+            viewModel.$shelfLife
+                .receive(on: DispatchQueue.main)
+                .sink { [weak self] days in
+                    if let days = days {
+                        self?.shelfLifeField.setText("\(days)")
+                    } else {
+                        self?.shelfLifeField.setText("")
+                    }
+                }
+                .store(in: &cancellables)
+            
+            // 监听生产日期变化（用于自动计算过期日期）
             viewModel.$productionDate
                 .receive(on: DispatchQueue.main)
                 .sink { [weak self] date in
@@ -492,6 +527,13 @@ class AddItemViewController: UIViewController {
             
             if let date = viewModel.productionDate {
                 productionDateField.setDate(date)
+            }
+            
+            // 保质期
+            if let days = viewModel.shelfLife {
+                shelfLifeField.setText("\(days)")
+            } else {
+                shelfLifeField.setText("")
             }
             
             if let date = viewModel.expiryDate {
