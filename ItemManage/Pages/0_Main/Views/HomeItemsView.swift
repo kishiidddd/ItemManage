@@ -281,6 +281,7 @@ extension HomeItemsView: UITableViewDelegate, UITableViewDataSource {
         tableView.deselectRow(at: indexPath, animated: true)
         
         let item = currentItems[indexPath.row]
+
         // 发送通知或通过代理传递选中的物品
         NotificationCenter.default.post(name: NSNotification.Name("DidSelectItem"), object: item)
     }

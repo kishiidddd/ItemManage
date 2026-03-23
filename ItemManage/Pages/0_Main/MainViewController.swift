@@ -69,7 +69,20 @@ class MainViewController: UIViewController {
         setupBinding()
         setupSearchAction()
         setupTableViewBackground()
+        setupNotifications()
+    }
+    
+    private func setupNotifications(){
+        NotificationCenter.default.addObserver(self,selector: #selector(showItemDetail), name: NSNotification.Name("DidSelectItem"), object: nil)
+    }
+    
+    @objc func showItemDetail(_ notification:Notification){
+        guard let item = notification.object as? ItemModel else { return }
         
+        let popup = ItemDetailPopupViewController(item: item)
+        popup.modalPresentationStyle = .overFullScreen
+        popup.modalTransitionStyle = .crossDissolve
+        present(popup, animated: true)
     }
 
     

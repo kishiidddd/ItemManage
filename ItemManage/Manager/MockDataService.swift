@@ -1148,7 +1148,7 @@ class MockDataService {
             shelfLife: nil,
             expiryDate: tomatoExpiryDate,
             locationId: "2-1",
-            remarks: "新鲜蔬菜"
+            remarks: "新鲜蔬菜新鲜蔬菜新鲜蔬菜新鲜蔬菜新鲜蔬菜新鲜蔬菜新鲜蔬菜新鲜蔬菜新鲜蔬菜新鲜蔬菜新鲜蔬菜新鲜蔬菜新鲜蔬菜新鲜蔬菜新鲜蔬菜新鲜蔬菜新鲜蔬菜"
         )
         items.append(tomato)
         

@@ -271,10 +271,25 @@ extension RemindViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         
+        let overlay = UIView()
+        overlay.backgroundColor = UIColor.black.withAlphaComponent(0.6) // 半透明黑色背景
+        overlay.alpha = 0
+        overlay.tag = 999
+        
+        // 获取 keyWindow
+        guard let window = UIApplication.shared.keyWindow else { return }
+        
+        // 添加到 window 上，这样可以覆盖 tabbar
+        window.addSubview(overlay)
+        overlay.snp.makeConstraints { make in
+            make.edges.equalToSuperview()
+        }
+        
         let item = expiredItems[indexPath.row]
-        // 跳转到物品详情，您需要根据您的项目结构调整
-        let detailVC = ItemDetailViewController(item: item)
-        navigationController?.pushViewController(detailVC, animated: true)
+        let popup = ItemDetailPopupViewController(item: item)
+        popup.modalPresentationStyle = .overFullScreen
+        popup.modalTransitionStyle = .crossDissolve
+        present(popup, animated: true)
     }
     
     // 可选：添加高度预估以优化滚动性能
@@ -464,34 +479,3 @@ class ExpiredItemCell: UITableViewCell {
     }
 }
 
-// MARK: - ItemDetailViewController（示例）
-class ItemDetailViewController: UIViewController {
-    
-    private let item: ItemModel
-    
-    init(item: ItemModel) {
-        self.item = item
-        super.init(nibName: nil, bundle: nil)
-        title = item.name
-    }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        view.backgroundColor = .white
-        
-        // 这里可以添加您的详情页面UI
-        let label = UILabel()
-        label.text = "物品详情: \(item.name)"
-        label.textAlignment = .center
-        label.font = UIFont.systemFont(ofSize: 18)
-        view.addSubview(label)
-        
-        label.snp.makeConstraints { make in
-            make.center.equalToSuperview()
-        }
-    }
-}
