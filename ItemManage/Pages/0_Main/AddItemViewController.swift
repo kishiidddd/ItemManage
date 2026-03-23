@@ -464,7 +464,7 @@ class AddItemViewController: UIViewController {
                     switch result {
                     case .success(let item):
                         self?.delegate?.addItemViewControllerDidSave(self!, item: item)
-                        self?.dismiss(animated: true)
+                        self?.navigationController?.popViewController(animated: true)
                     case .failure(let error):
                         self?.showError(error.localizedDescription)
                     }

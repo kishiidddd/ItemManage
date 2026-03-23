@@ -441,8 +441,7 @@ class SettingViewController: UIViewController {
         
         if !isLoggedIn {
             let loginVC = LoginViewController()
-            let nav = UINavigationController(rootViewController: loginVC)
-            present(nav, animated: true)
+            navigationController?.pushViewController(loginVC, animated: true)
         }
     }
     

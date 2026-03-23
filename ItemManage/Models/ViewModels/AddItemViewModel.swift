@@ -282,11 +282,3 @@ class AddItemViewModel {
     }
 }
 
-// 扩展 ItemDataService 以支持获取单个物品
-extension ItemDataService {
-    
-    func getEditingItem() -> ItemModel? {
-        // 返回示例数据
-        return ItemModel.example()
-    }
-}
