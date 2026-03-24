@@ -536,6 +536,28 @@ class HomeItemsView: UIView {
     }
     
     // MARK: - 分类筛选
+//    private func refreshCurrentItems() {
+//        switch selectedIndex {
+//        case 0: // 全部
+//            currentItems = allItems
+//        case 1: // 最近添加
+//            currentItems = repository.getRecentItems()
+//        default: // 具体分类
+//            let categoryIndex = selectedIndex - 2
+//            if categoryIndex < categories.count {
+//                let categoryId = categories[categoryIndex].id
+//                currentItems = repository.getItems(byCategoryId: categoryId)
+//            } else {
+//                currentItems = []
+//            }
+//        }
+//        
+//        // 更新空状态显示
+//        emptyStateView.isHidden = !currentItems.isEmpty
+//        itemsTableView.reloadData()
+//    }
+    
+    // 修改 refreshCurrentItems 方法，确保更新 tableView
     private func refreshCurrentItems() {
         switch selectedIndex {
         case 0: // 全部
@@ -554,7 +576,12 @@ class HomeItemsView: UIView {
         
         // 更新空状态显示
         emptyStateView.isHidden = !currentItems.isEmpty
+        
+        // 强制刷新 tableView
         itemsTableView.reloadData()
+        
+        // 如果数据源发生变化，打印调试信息
+        print("🔄 刷新物品列表: 当前显示 \(currentItems.count) 个物品")
     }
     
     // MARK: - Public Methods

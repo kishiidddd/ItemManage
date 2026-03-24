@@ -112,6 +112,10 @@ class CreateItemRequest: HandyJSON {
     var totalPrice: Double?
     var unitId: String?
     
+    // 位置相关字段
+    var primaryLocationId: String?      // 一级位置ID
+    var secondaryLocationId: String?    // 二级位置ID
+    
     // 日期相关字段（支持三种方式）
     var productionDate: Date?      // 生产日期
     var shelfLife: Int?            // 保质期（天数）
@@ -161,8 +165,6 @@ class CreateItemRequest: HandyJSON {
         self.shelfLife = item.shelfLife
         self.expiryDate = item.expiryDate
         self.remarks = item.remarks
-        self.level = item.level
-        self.parentId = item.parentId
         
         // 处理提醒设置
         if let ruleId = item.reminder.ruleId {
@@ -333,7 +335,6 @@ class UpdateItemRequest: HandyJSON {
         self.shelfLife = item.shelfLife
         self.expiryDate = item.expiryDate
         self.remarks = item.remarks
-        self.parentId = item.parentId
         
         // 处理提醒设置
         if let ruleId = item.reminder.ruleId {
