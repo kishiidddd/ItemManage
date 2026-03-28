@@ -153,27 +153,6 @@ class AddItemViewController: UIViewController {
         return field
     }()
     
-    // MARK: - 过期提醒 Section
-    private lazy var reminderSectionView: SectionView = {
-        let view = SectionView(title: "过期提醒")
-        return view
-    }()
-    
-    private lazy var reminderRuleField: CustomPickerField = {
-        let field = CustomPickerField()
-        field.configure(title: "提醒规则", placeholder: "不提醒")
-        field.addTarget(self, action: #selector(reminderRuleTapped), for: .touchUpInside)
-        return field
-    }()
-    
-    private lazy var reminderDaysField: CustomPickerField = {
-        let field = CustomPickerField()
-        field.configure(title: "提前天数", placeholder: "选择天数")
-        field.addTarget(self, action: #selector(reminderDaysTapped), for: .touchUpInside)
-        field.isHidden = true
-        return field
-    }()
-    
     // MARK: - 备注 Section
     private lazy var remarksSectionView: SectionView = {
         let view = SectionView(title: "备注信息")
@@ -290,11 +269,6 @@ class AddItemViewController: UIViewController {
         timeSectionView.contentStack.addArrangedSubview(createSeparator())
         timeSectionView.contentStack.addArrangedSubview(expiryDateField)
         
-        // 过期提醒 Section
-        stackView.addArrangedSubview(reminderSectionView)
-        reminderSectionView.contentStack.addArrangedSubview(reminderRuleField)
-        reminderSectionView.contentStack.addArrangedSubview(reminderDaysField)
-        
         // 备注 Section
         stackView.addArrangedSubview(remarksSectionView)
         remarksSectionView.contentStack.addArrangedSubview(remarksTextView)
@@ -354,10 +328,10 @@ class AddItemViewController: UIViewController {
     private func setupViewModelObservers() {
         // 监听数据加载完成
         viewModel.$categories
-            .combineLatest(viewModel.$units, viewModel.$reminderRules)
+            .combineLatest(viewModel.$units)
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] categories, units, rules in
-                if !categories.isEmpty || !units.isEmpty || !rules.isEmpty {
+            .sink { [weak self] categories, units in
+                if !categories.isEmpty || !units.isEmpty {
                     self?.updateUI()
                 }
             }
@@ -527,25 +501,6 @@ class AddItemViewController: UIViewController {
             }
             .store(in: &cancellables)
         
-        // 监听提醒规则
-        viewModel.$selectedReminderRule
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] rule in
-                self?.reminderRuleField.setValue(rule?.name ?? "不提醒")
-                self?.reminderDaysField.isHidden = rule?.daysBefore != nil
-            }
-            .store(in: &cancellables)
-        
-        // 监听自定义提醒天数
-        viewModel.$customReminderDays
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] days in
-                if let days = days {
-                    self?.reminderDaysField.setValue("提前\(days)天")
-                }
-            }
-            .store(in: &cancellables)
-        
         // 监听备注
         viewModel.$remarks
             .receive(on: DispatchQueue.main)
@@ -621,13 +576,6 @@ class AddItemViewController: UIViewController {
             expiryDateField.setDate(date)
         }
         
-        reminderRuleField.setValue(viewModel.selectedReminderRule?.name ?? "不提醒")
-        reminderDaysField.isHidden = viewModel.selectedReminderRule?.daysBefore != nil
-        
-        if let days = viewModel.customReminderDays {
-            reminderDaysField.setValue("提前\(days)天")
-        }
-        
         remarksTextView.setText(viewModel.remarks)
     }
     
@@ -665,14 +613,6 @@ class AddItemViewController: UIViewController {
     
     @objc private func expiryDateTapped() {
         showDatePicker(for: .expiry)
-    }
-    
-    @objc private func reminderRuleTapped() {
-        showReminderPicker()
-    }
-    
-    @objc private func reminderDaysTapped() {
-        showCustomDaysPicker()
     }
     
     @objc private func keyboardWillShow(notification: NSNotification) {
@@ -831,57 +771,6 @@ class AddItemViewController: UIViewController {
         if let popover = alert.popoverPresentationController {
             popover.sourceView = field == .production ? productionDateField : expiryDateField
             popover.sourceRect = (field == .production ? productionDateField : expiryDateField).bounds
-        }
-        
-        present(alert, animated: true)
-    }
-    
-    private func showReminderPicker() {
-        let alert = UIAlertController(title: "提醒规则", message: nil, preferredStyle: .actionSheet)
-        
-        alert.addAction(UIAlertAction(title: "不提醒", style: .default) { [weak self] _ in
-            self?.viewModel.selectedReminderRule = nil
-            self?.viewModel.customReminderDays = nil
-            self?.reminderDaysField.isHidden = true
-        })
-        
-        for rule in viewModel.reminderRules {
-            alert.addAction(UIAlertAction(title: rule.name, style: .default) { [weak self] _ in
-                self?.viewModel.selectedReminderRule = rule
-                
-                if rule.daysBefore == nil {
-                    self?.reminderDaysField.isHidden = false
-                } else {
-                    self?.reminderDaysField.isHidden = true
-                }
-            })
-        }
-        
-        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
-        
-        if let popover = alert.popoverPresentationController {
-            popover.sourceView = reminderRuleField
-            popover.sourceRect = reminderRuleField.bounds
-        }
-        
-        present(alert, animated: true)
-    }
-    
-    private func showCustomDaysPicker() {
-        let alert = UIAlertController(title: "选择提醒天数", message: nil, preferredStyle: .actionSheet)
-        
-        let days = [1, 2, 3, 5, 7, 14, 30]
-        for day in days {
-            alert.addAction(UIAlertAction(title: "提前\(day)天", style: .default) { [weak self] _ in
-                self?.viewModel.customReminderDays = day
-            })
-        }
-        
-        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
-        
-        if let popover = alert.popoverPresentationController {
-            popover.sourceView = reminderDaysField
-            popover.sourceRect = reminderDaysField.bounds
         }
         
         present(alert, animated: true)

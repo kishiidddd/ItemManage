@@ -121,7 +121,6 @@ class CreateItemRequest: HandyJSON {
     var shelfLife: Int?            // 保质期（天数）
     var expiryDate: Date?          // 过期日期
     
-    var reminder: [String: Any]?
     var remarks: String?
     var level: Int = 3
     var parentId: String?
@@ -167,14 +166,6 @@ class CreateItemRequest: HandyJSON {
         self.shelfLife = item.shelfLife
         self.expiryDate = item.expiryDate
         self.remarks = item.remarks
-        
-        // 处理提醒设置
-        if let ruleId = item.reminder.ruleId {
-            self.reminder = [
-                "ruleId": ruleId,
-                "daysBefore": item.reminder.daysBefore ?? NSNull()
-            ]
-        }
         
         // 处理照片（这里假设上传后返回URL）
         self.photos = item.photos.compactMap { $0.url.isEmpty ? nil : $0.url }
@@ -295,10 +286,6 @@ class CreateItemRequest: HandyJSON {
             }
         }
         
-        if let reminder = reminder {
-            dict["reminder"] = reminder
-        }
-        
         if let remarks = remarks, !remarks.isEmpty {
             dict["remarks"] = remarks
         }
@@ -327,7 +314,6 @@ class UpdateItemRequest: HandyJSON {
     var productionDate: Date?
     var shelfLife: Int?
     var expiryDate: Date?
-    var reminder: [String: Any]?
     var remarks: String?
     var parentId: String?
     var photos: [String]?
@@ -348,14 +334,6 @@ class UpdateItemRequest: HandyJSON {
         self.shelfLife = item.shelfLife
         self.expiryDate = item.expiryDate
         self.remarks = item.remarks
-        
-        // 处理提醒设置
-        if let ruleId = item.reminder.ruleId {
-            self.reminder = [
-                "ruleId": ruleId,
-                "daysBefore": item.reminder.daysBefore ?? NSNull()
-            ]
-        }
         
         // 处理照片
         if !item.photos.isEmpty {
@@ -437,10 +415,6 @@ class UpdateItemRequest: HandyJSON {
             if let shelfLife = shelfLife {
                 dict["shelfLife"] = shelfLife
             }
-        }
-        
-        if let reminder = reminder {
-            dict["reminder"] = reminder
         }
         
         if let remarks = remarks {

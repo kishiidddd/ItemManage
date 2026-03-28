@@ -17,15 +17,12 @@ class AddItemViewModel: ObservableObject {
     @Published var productionDate: Date?
     @Published var expiryDate: Date?
     @Published var shelfLife: Int?
-    @Published var selectedReminderRule: ReminderRuleModel?
-    @Published var customReminderDays: Int?
     @Published var remarks: String = ""
     
     // 数据源
     @Published var categories: [CategoryModel] = []
     @Published var units: [UnitModel] = []
     @Published var primaryLocations: [PrimaryLocationModel] = []
-    @Published var reminderRules: [ReminderRuleModel] = []
     
     // UI状态
     @Published var isLoading: Bool = false
@@ -187,15 +184,6 @@ class AddItemViewModel: ObservableObject {
         shelfLife = item.shelfLife
         
         remarks = item.remarks ?? ""
-        
-        // 加载提醒规则
-        if let reminderDays = item.reminder.daysBefore {
-            customReminderDays = reminderDays
-            // 查找自定义提醒规则（daysBefore 为 nil 的规则）
-            selectedReminderRule = reminderRules.first { $0.daysBefore == nil }
-        } else if let reminderRuleId = item.reminder.ruleId {
-            selectedReminderRule = reminderRules.first { $0.id == reminderRuleId }
-        }
     }
     
     private func loadDataFromRepository() {
@@ -205,16 +193,6 @@ class AddItemViewModel: ObservableObject {
         
         if let item = editingItem {
             loadItemData(item)
-        }
-        
-        ItemDataService.shared.getReminderRules { [weak self] rules in
-            DispatchQueue.main.async {
-                guard let self = self else { return }
-                self.reminderRules = rules
-                if let item = self.editingItem {
-                    self.loadItemData(item)
-                }
-            }
         }
     }
     
@@ -252,26 +230,6 @@ class AddItemViewModel: ObservableObject {
         item.productionDate = productionDate
         item.expiryDate = expiryDate
         item.shelfLife = shelfLife
-        
-        // 设置提醒规则
-        if let rule = selectedReminderRule {
-            if rule.daysBefore == nil {
-                // 自定义提醒天数
-                if let days = customReminderDays, days > 0 {
-                    item.reminder.daysBefore = days
-                    item.reminder.isEnabled = true
-                } else {
-                    item.reminder.isEnabled = false
-                }
-            } else {
-                // 预设提醒规则
-                item.reminder.ruleId = rule.id
-                item.reminder.daysBefore = rule.daysBefore
-                item.reminder.isEnabled = true
-            }
-        } else {
-            item.reminder.isEnabled = false
-        }
         
         item.remarks = remarks.isEmpty ? nil : remarks
         item.updatedAt = Date()
@@ -348,22 +306,6 @@ class AddItemViewModel: ObservableObject {
     }
     
     // MARK: - Helper Methods
-    func getExpiryStatus() -> (description: String, color: String)? {
-        guard let expiryDate = expiryDate else { return nil }
-        
-        let daysUntilExpiry = Calendar.current.dateComponents([.day], from: Date(), to: expiryDate).day ?? 0
-        
-        if daysUntilExpiry < 0 {
-            return ("已过期\(-daysUntilExpiry)天", "#FF6B6B")
-        } else if daysUntilExpiry == 0 {
-            return ("今天过期", "#FFB347")
-        } else if daysUntilExpiry <= 3 {
-            return ("\(daysUntilExpiry)天后过期", "#FFB347")
-        } else {
-            return ("\(daysUntilExpiry)天后过期", "#4CAF50")
-        }
-    }
-    
     func formatDate(_ date: Date, format: String = "yyyy-MM-dd") -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = format
