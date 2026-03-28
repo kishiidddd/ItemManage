@@ -502,3 +502,24 @@ class ItemDataService {
         }
     }
 }
+
+// MARK: - 按过期日筛选（提醒页）
+extension ItemDataService {
+    
+    /// 返回「选中日期」同一自然日过期的物品（按设备本地时区比较日历日）
+    func getExpiredItems(for date: Date,
+                         completion: @escaping (Result<[ItemModel], Error>) -> Void) {
+        let calendar = Calendar.current
+        fetchAllItemsPages { result in
+            switch result {
+            case .failure(let e): completion(.failure(e))
+            case .success(let allItems):
+                let items = allItems.filter { item in
+                    guard let expiryDate = item.expiryDate else { return false }
+                    return calendar.isDate(expiryDate, inSameDayAs: date)
+                }
+                completion(.success(items))
+            }
+        }
+    }
+}

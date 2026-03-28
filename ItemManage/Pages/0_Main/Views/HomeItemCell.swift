@@ -79,23 +79,23 @@ class HomeItemCell: UITableViewCell {
         cardView.addSubview(statusLabel)
         cardView.addSubview(priceLabel)
         
-        // 卡片间距
+        // 卡片：自适应高度，保证第三行「过期状态」不被 80pt 固定高度压没
         cardView.snp.makeConstraints { make in
             make.top.equalToSuperview().offset(6)
             make.left.equalToSuperview().offset(16)
             make.right.equalToSuperview().offset(-16)
             make.bottom.equalToSuperview().offset(-6)
-            make.height.equalTo(80)
         }
         
         itemImageView.snp.makeConstraints { make in
             make.left.equalToSuperview().offset(12)
-            make.centerY.equalToSuperview()
+            make.top.equalToSuperview().offset(12)
             make.width.height.equalTo(56)
+            make.bottom.lessThanOrEqualToSuperview().offset(-12)
         }
         
         nameLabel.snp.makeConstraints { make in
-            make.top.equalTo(itemImageView).offset(4)
+            make.top.equalToSuperview().offset(12)
             make.left.equalTo(itemImageView.snp.right).offset(12)
             make.right.lessThanOrEqualTo(priceLabel.snp.left).offset(-8)
         }
@@ -108,7 +108,8 @@ class HomeItemCell: UITableViewCell {
         statusLabel.snp.makeConstraints { make in
             make.top.equalTo(quantityLabel.snp.bottom).offset(4)
             make.left.equalTo(nameLabel)
-            make.bottom.equalTo(itemImageView).offset(-4)
+            make.right.lessThanOrEqualToSuperview().offset(-12)
+            make.bottom.equalToSuperview().offset(-12)
         }
         
         priceLabel.snp.makeConstraints { make in

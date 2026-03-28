@@ -30,15 +30,21 @@ class FWMainTabViewController: UITabBarController {
                                       image: UIImage(named: "tab_add_icon")?.withRenderingMode(.alwaysOriginal),
                                       selectedImage: UIImage(named: "tab_add_icon_select")?.withRenderingMode(.alwaysOriginal))
 
-        let vc3 = SettingViewController()
-        vc3.tabBarItem = UITabBarItem(title: "我的",
+        let vc3 = RemindViewController()
+        vc3.tabBarItem = UITabBarItem(title: "提醒",
+                                      image: UIImage(named: "tab_remind_icon")?.withRenderingMode(.alwaysOriginal),
+                                      selectedImage: UIImage(named: "tab_remind_icon_select")?.withRenderingMode(.alwaysOriginal))
+
+        let vc4 = SettingViewController()
+        vc4.tabBarItem = UITabBarItem(title: "我的",
                                       image: UIImage(named: "tab_setting_icon")?.withRenderingMode(.alwaysOriginal),
                                       selectedImage: UIImage(named: "tab_setting_icon_select")?.withRenderingMode(.alwaysOriginal))
 
         viewControllers = [
             UINavigationController(rootViewController: vc1),
             UINavigationController(rootViewController: vc2),
-            UINavigationController(rootViewController: vc3)
+            UINavigationController(rootViewController: vc3),
+            UINavigationController(rootViewController: vc4)
         ]
         
         // 设置背景色（iOS 13+ 推荐）

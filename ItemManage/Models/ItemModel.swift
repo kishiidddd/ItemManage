@@ -41,11 +41,11 @@ class ItemModel: HandyJSON {
         mapper <<< self.primaryLocationId <-- "primaryLocationId"
         mapper <<< self.secondaryLocationId <-- "secondaryLocationId"
         
-        // 处理日期格式
-        mapper <<< self.productionDate <-- "productionDate"
-        mapper <<< self.expiryDate <-- "expiryDate"
-        mapper <<< self.createdAt <-- "createdAt"
-        mapper <<< self.updatedAt <-- "updatedAt"
+        // 日期：服务端为 ISO8601 字符串（含 .sssZ）或毫秒时间戳；HandyJSON 默认无法解析 ISO 字符串
+        mapper <<< self.productionDate <-- BackendDateTransform()
+        mapper <<< self.expiryDate <-- BackendDateTransform()
+        mapper <<< self.createdAt <-- BackendRequiredDateTransform()
+        mapper <<< self.updatedAt <-- BackendRequiredDateTransform()
     }
     
     // MARK: - 计算属性
