@@ -161,6 +161,8 @@ class CreateItemRequest: HandyJSON {
         self.quantity = item.quantity
         self.totalPrice = item.totalPrice
         self.unitId = item.unitId
+        self.primaryLocationId = item.primaryLocationId
+        self.secondaryLocationId = item.secondaryLocationId
         self.productionDate = item.productionDate
         self.shelfLife = item.shelfLife
         self.expiryDate = item.expiryDate
@@ -258,6 +260,13 @@ class CreateItemRequest: HandyJSON {
             dict["unitId"] = unitId
         }
         
+        if let pid = primaryLocationId, !pid.isEmpty {
+            dict["primaryLocationId"] = pid
+        }
+        if let sid = secondaryLocationId, !sid.isEmpty {
+            dict["secondaryLocationId"] = sid
+        }
+        
         // 根据用户输入方式决定传递哪些字段
         if let expiryDate = expiryDate {
             // 用户直接填写了过期日期
@@ -313,6 +322,8 @@ class UpdateItemRequest: HandyJSON {
     var quantity: Int?
     var totalPrice: Double?
     var unitId: String?
+    var primaryLocationId: String?
+    var secondaryLocationId: String?
     var productionDate: Date?
     var shelfLife: Int?
     var expiryDate: Date?
@@ -331,6 +342,8 @@ class UpdateItemRequest: HandyJSON {
         self.quantity = item.quantity
         self.totalPrice = item.totalPrice
         self.unitId = item.unitId
+        self.primaryLocationId = item.primaryLocationId
+        self.secondaryLocationId = item.secondaryLocationId
         self.productionDate = item.productionDate
         self.shelfLife = item.shelfLife
         self.expiryDate = item.expiryDate
@@ -392,6 +405,13 @@ class UpdateItemRequest: HandyJSON {
         
         if let unitId = unitId {
             dict["unitId"] = unitId
+        }
+        
+        if let pid = primaryLocationId, !pid.isEmpty {
+            dict["primaryLocationId"] = pid
+        }
+        if let sid = secondaryLocationId, !sid.isEmpty {
+            dict["secondaryLocationId"] = sid
         }
         
         // 处理日期

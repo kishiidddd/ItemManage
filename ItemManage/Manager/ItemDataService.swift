@@ -2,694 +2,668 @@
 //  ItemDataService.swift
 //  ItemManage
 //
-//  Created by a on 2026/3/17.
-//
 
 import Foundation
+
+/// 从 ItemsManagementServer 拉取的完整快照（写入 `ItemRepository`）
+struct RepositorySnapshot {
+    let items: [ItemModel]
+    let categories: [CategoryModel]
+    let units: [UnitModel]
+    let primaryLocations: [PrimaryLocationModel]
+    let secondaryLocations: [SecondaryLocationModel]
+}
 
 class ItemDataService {
     
     static let shared = ItemDataService()
-    private let mockDataService = MockDataService.shared
     
     private init() {
-        print("✅ ItemDataService initialized (Backend: MockDataService)")
+        print("✅ ItemDataService initialized (Backend: \(ServerConfiguration.apiBaseURLString))")
+    }
+    
+    // MARK: - 全量加载（供 ItemRepository）
+    
+    func loadFullSnapshot(completion: @escaping (Result<RepositorySnapshot, Error>) -> Void) {
+        let group = DispatchGroup()
+        var categories: [CategoryModel] = []
+        var units: [UnitModel] = []
+        var primaries: [PrimaryLocationModel] = []
+        var secondaries: [SecondaryLocationModel] = []
+        var items: [ItemModel] = []
+        var loadError: Error?
+        let lock = NSLock()
+        
+        func fail(_ e: Error) {
+            lock.lock()
+            if loadError == nil { loadError = e }
+            lock.unlock()
+        }
+        
+        group.enter()
+        fetchCategories { result in
+            switch result {
+            case .success(let c): categories = c
+            case .failure(let e): fail(e)
+            }
+            group.leave()
+        }
+        
+        group.enter()
+        fetchUnits { result in
+            switch result {
+            case .success(let u): units = u
+            case .failure(let e): fail(e)
+            }
+            group.leave()
+        }
+        
+        group.enter()
+        fetchPrimaryLocations { result in
+            switch result {
+            case .success(let p): primaries = p
+            case .failure(let e): fail(e)
+            }
+            group.leave()
+        }
+        
+        group.enter()
+        fetchSecondaryLocations { result in
+            switch result {
+            case .success(let s): secondaries = s
+            case .failure(let e): fail(e)
+            }
+            group.leave()
+        }
+        
+        group.enter()
+        fetchAllItemsPages { result in
+            switch result {
+            case .success(let i): items = i
+            case .failure(let e): fail(e)
+            }
+            group.leave()
+        }
+        
+        group.notify(queue: .main) {
+            if let e = loadError {
+                completion(.failure(e))
+            } else {
+                completion(.success(RepositorySnapshot(
+                    items: items,
+                    categories: categories,
+                    units: units,
+                    primaryLocations: primaries,
+                    secondaryLocations: secondaries
+                )))
+            }
+        }
+    }
+    
+    private func fetchCategories(completion: @escaping (Result<[CategoryModel], Error>) -> Void) {
+        ItemAPIClient.shared.perform(path: "categories", method: "GET") { result in
+            switch result {
+            case .failure(let e): completion(.failure(e))
+            case .success(let json):
+                guard let dict = json as? [String: Any], let data = dict["data"] else {
+                    completion(.failure(ItemAPIError.decodeFailed))
+                    return
+                }
+                completion(.success(ItemJSONMapper.array(CategoryModel.self, from: data)))
+            }
+        }
+    }
+    
+    private func fetchUnits(completion: @escaping (Result<[UnitModel], Error>) -> Void) {
+        ItemAPIClient.shared.perform(path: "units", method: "GET") { result in
+            switch result {
+            case .failure(let e): completion(.failure(e))
+            case .success(let json):
+                guard let dict = json as? [String: Any], let data = dict["data"] else {
+                    completion(.failure(ItemAPIError.decodeFailed))
+                    return
+                }
+                completion(.success(ItemJSONMapper.array(UnitModel.self, from: data)))
+            }
+        }
+    }
+    
+    private func fetchPrimaryLocations(completion: @escaping (Result<[PrimaryLocationModel], Error>) -> Void) {
+        ItemAPIClient.shared.perform(path: "primary-locations", method: "GET") { result in
+            switch result {
+            case .failure(let e): completion(.failure(e))
+            case .success(let json):
+                guard let dict = json as? [String: Any], let data = dict["data"] else {
+                    completion(.failure(ItemAPIError.decodeFailed))
+                    return
+                }
+                completion(.success(ItemJSONMapper.array(PrimaryLocationModel.self, from: data)))
+            }
+        }
+    }
+    
+    private func fetchSecondaryLocations(completion: @escaping (Result<[SecondaryLocationModel], Error>) -> Void) {
+        ItemAPIClient.shared.perform(path: "secondary-locations", method: "GET") { result in
+            switch result {
+            case .failure(let e): completion(.failure(e))
+            case .success(let json):
+                guard let dict = json as? [String: Any], let data = dict["data"] else {
+                    completion(.failure(ItemAPIError.decodeFailed))
+                    return
+                }
+                completion(.success(ItemJSONMapper.array(SecondaryLocationModel.self, from: data)))
+            }
+        }
+    }
+    
+    private func fetchAllItemsPages(completion: @escaping (Result<[ItemModel], Error>) -> Void) {
+        var acc: [ItemModel] = []
+        func loadPage(_ page: Int) {
+            getItems(page: page, limit: 100, categoryId: nil, primaryLocationId: nil, secondaryLocationId: nil, keyword: nil) { result in
+                switch result {
+                case .failure(let e):
+                    completion(.failure(e))
+                case .success(let resp):
+                    acc.append(contentsOf: resp.items)
+                    let pages = resp.pagination?.pages ?? 1
+                    if page < pages {
+                        loadPage(page + 1)
+                    } else {
+                        completion(.success(acc))
+                    }
+                }
+            }
+        }
+        loadPage(1)
     }
     
     // MARK: - 分类管理
     func getCategories(completion: @escaping ([CategoryModel]) -> Void) {
-        print("📦 getCategories called")
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
-            guard let self = self else { return }
-            let categories = self.mockDataService.getCategories()
-            print("📦 Returning \(categories.count) categories")
-            completion(categories)
+        fetchCategories { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let c): completion(c)
+                case .failure(let e):
+                    print("❌ getCategories: \(e.localizedDescription)")
+                    completion([])
+                }
+            }
         }
     }
     
     // MARK: - 单位管理
     func getUnits(completion: @escaping ([UnitModel]) -> Void) {
-        print("📦 getUnits called")
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
-            guard let self = self else { return }
-            let units = self.mockDataService.getUnits()
-            print("📦 Returning \(units.count) units")
-            completion(units)
+        fetchUnits { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let u): completion(u)
+                case .failure(let e):
+                    print("❌ getUnits: \(e.localizedDescription)")
+                    completion([])
+                }
+            }
         }
     }
     
     // MARK: - 位置管理
     func getPrimaryLocations(completion: @escaping ([PrimaryLocationModel]) -> Void) {
-        print("📦 getPrimaryLocations called")
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
-            guard let self = self else { return }
-            let locations = self.mockDataService.getPrimaryLocations()
-            print("📦 Returning \(locations.count) primary locations")
-            completion(locations)
+        fetchPrimaryLocations { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let p): completion(p)
+                case .failure(let e):
+                    print("❌ getPrimaryLocations: \(e.localizedDescription)")
+                    completion([])
+                }
+            }
         }
     }
     
     func getSecondaryLocations(completion: @escaping ([SecondaryLocationModel]) -> Void) {
-        print("📦 getSecondaryLocations called")
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
-            guard let self = self else { return }
-            let locations = self.mockDataService.getSecondaryLocations()
-            print("📦 Returning \(locations.count) secondary locations")
-            completion(locations)
+        fetchSecondaryLocations { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let s): completion(s)
+                case .failure(let e):
+                    print("❌ getSecondaryLocations: \(e.localizedDescription)")
+                    completion([])
+                }
+            }
         }
     }
     
     func getSecondaryLocations(for primaryLocationId: String, completion: @escaping ([SecondaryLocationModel]) -> Void) {
-        print("📦 getSecondaryLocations for primary location: \(primaryLocationId)")
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
-            guard let self = self else { return }
-            let locations = self.mockDataService.getSecondaryLocations(for: primaryLocationId)
-            print("📦 Returning \(locations.count) secondary locations")
-            completion(locations)
+        let q = [URLQueryItem(name: "primaryLocationId", value: primaryLocationId)]
+        ItemAPIClient.shared.perform(path: "secondary-locations", method: "GET", queryItems: q) { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .failure(let e):
+                    print("❌ getSecondaryLocations(for:): \(e.localizedDescription)")
+                    completion([])
+                case .success(let json):
+                    guard let dict = json as? [String: Any], let data = dict["data"] else {
+                        completion([])
+                        return
+                    }
+                    completion(ItemJSONMapper.array(SecondaryLocationModel.self, from: data))
+                }
+            }
         }
     }
     
     func createPrimaryLocation(_ location: PrimaryLocationModel, completion: @escaping (Result<PrimaryLocationModel, Error>) -> Void) {
-        print("📦 createPrimaryLocation called: \(location.name)")
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-            guard let self = self else { return }
-            
-            let newLocation = PrimaryLocationModel()
-            newLocation.id = UUID().uuidString
-            newLocation.name = location.name
-            newLocation.icon = location.icon
-            newLocation.color = location.color
-            newLocation.userId = location.userId
-            newLocation.sortOrder = location.sortOrder
-            newLocation.isSystem = location.isSystem
-            newLocation.createdAt = Date()
-            
-            let success = self.mockDataService.addPrimaryLocation(newLocation)
-            
-            if success {
-                print("📦 Created primary location with id: \(newLocation.id)")
-                completion(.success(newLocation))
-            } else {
-                let error = NSError(domain: "ItemDataService",
-                                   code: 500,
-                                   userInfo: [NSLocalizedDescriptionKey: "Failed to create primary location"])
-                completion(.failure(error))
+        let body: [String: Any] = [
+            "name": location.name,
+            "icon": location.icon,
+            "color": location.color,
+            "sortOrder": location.sortOrder
+        ]
+        ItemAPIClient.shared.perform(path: "primary-locations", method: "POST", jsonBody: body) { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .failure(let e): completion(.failure(e))
+                case .success(let json):
+                    guard let dict = json as? [String: Any], let data = dict["data"],
+                          let model = ItemJSONMapper.object(PrimaryLocationModel.self, from: data) else {
+                        completion(.failure(ItemAPIError.decodeFailed))
+                        return
+                    }
+                    completion(.success(model))
+                }
             }
         }
     }
     
     func updatePrimaryLocation(_ location: PrimaryLocationModel, completion: @escaping (Result<PrimaryLocationModel, Error>) -> Void) {
-        print("📦 updatePrimaryLocation called: \(location.id)")
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-            guard let self = self else { return }
-            
-            let success = self.mockDataService.updatePrimaryLocation(location)
-            
-            if success {
-                print("📦 Updated primary location: \(location.name)")
-                completion(.success(location))
-            } else {
-                let error = NSError(domain: "ItemDataService",
-                                   code: 404,
-                                   userInfo: [NSLocalizedDescriptionKey: "Primary location not found"])
-                completion(.failure(error))
+        let body: [String: Any] = [
+            "name": location.name,
+            "icon": location.icon,
+            "color": location.color,
+            "sortOrder": location.sortOrder
+        ]
+        let path = "primary-locations/\(location.id)"
+        ItemAPIClient.shared.perform(path: path, method: "PUT", jsonBody: body) { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .failure(let e): completion(.failure(e))
+                case .success(let json):
+                    guard let dict = json as? [String: Any], let data = dict["data"],
+                          let model = ItemJSONMapper.object(PrimaryLocationModel.self, from: data) else {
+                        completion(.failure(ItemAPIError.decodeFailed))
+                        return
+                    }
+                    completion(.success(model))
+                }
             }
         }
     }
     
     func deletePrimaryLocation(id: String, completion: @escaping (Result<Bool, Error>) -> Void) {
-        print("📦 deletePrimaryLocation called, id: \(id)")
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-            guard let self = self else { return }
-            
-            // 检查是否有物品使用这个位置
-            let itemsInLocation = self.mockDataService.getItems(byPrimaryLocationId: id)
-            if !itemsInLocation.isEmpty {
-                let error = NSError(domain: "ItemDataService",
-                                   code: 400,
-                                   userInfo: [NSLocalizedDescriptionKey: "Cannot delete location, there are \(itemsInLocation.count) items using it"])
-                completion(.failure(error))
-                return
-            }
-            
-            let success = self.mockDataService.deletePrimaryLocation(id: id)
-            
-            if success {
-                print("📦 Deleted primary location: \(id)")
-                completion(.success(true))
-            } else {
-                let error = NSError(domain: "ItemDataService",
-                                   code: 404,
-                                   userInfo: [NSLocalizedDescriptionKey: "Primary location not found"])
-                completion(.failure(error))
+        ItemAPIClient.shared.perform(path: "primary-locations/\(id)", method: "DELETE") { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .failure(let e): completion(.failure(e))
+                case .success:
+                    completion(.success(true))
+                }
             }
         }
     }
     
     func createSecondaryLocation(_ location: SecondaryLocationModel, completion: @escaping (Result<SecondaryLocationModel, Error>) -> Void) {
-        print("📦 createSecondaryLocation called: \(location.name)")
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-            guard let self = self else { return }
-            
-            // 检查一级位置是否存在
-            guard self.mockDataService.getPrimaryLocation(byId: location.primaryLocationId) != nil else {
-                let error = NSError(domain: "ItemDataService",
-                                   code: 400,
-                                   userInfo: [NSLocalizedDescriptionKey: "Primary location not found"])
-                completion(.failure(error))
-                return
-            }
-            
-            let newLocation = SecondaryLocationModel()
-            newLocation.id = UUID().uuidString
-            newLocation.name = location.name
-            newLocation.primaryLocationId = location.primaryLocationId
-            newLocation.icon = location.icon
-            newLocation.color = location.color
-            newLocation.userId = location.userId
-            newLocation.sortOrder = location.sortOrder
-            newLocation.isSystem = location.isSystem
-            newLocation.createdAt = Date()
-            
-            let success = self.mockDataService.addSecondaryLocation(newLocation)
-            
-            if success {
-                print("📦 Created secondary location with id: \(newLocation.id)")
-                completion(.success(newLocation))
-            } else {
-                let error = NSError(domain: "ItemDataService",
-                                   code: 500,
-                                   userInfo: [NSLocalizedDescriptionKey: "Failed to create secondary location"])
-                completion(.failure(error))
+        let body: [String: Any] = [
+            "name": location.name,
+            "primaryLocationId": location.primaryLocationId,
+            "icon": location.icon,
+            "color": location.color,
+            "sortOrder": location.sortOrder
+        ]
+        ItemAPIClient.shared.perform(path: "secondary-locations", method: "POST", jsonBody: body) { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .failure(let e): completion(.failure(e))
+                case .success(let json):
+                    guard let dict = json as? [String: Any], let data = dict["data"],
+                          let model = ItemJSONMapper.object(SecondaryLocationModel.self, from: data) else {
+                        completion(.failure(ItemAPIError.decodeFailed))
+                        return
+                    }
+                    completion(.success(model))
+                }
             }
         }
     }
     
     func updateSecondaryLocation(_ location: SecondaryLocationModel, completion: @escaping (Result<SecondaryLocationModel, Error>) -> Void) {
-        print("📦 updateSecondaryLocation called: \(location.id)")
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-            guard let self = self else { return }
-            
-            let success = self.mockDataService.updateSecondaryLocation(location)
-            
-            if success {
-                print("📦 Updated secondary location: \(location.name)")
-                completion(.success(location))
-            } else {
-                let error = NSError(domain: "ItemDataService",
-                                   code: 404,
-                                   userInfo: [NSLocalizedDescriptionKey: "Secondary location not found"])
-                completion(.failure(error))
+        var body: [String: Any] = [
+            "name": location.name,
+            "icon": location.icon,
+            "color": location.color,
+            "sortOrder": location.sortOrder
+        ]
+        body["primaryLocationId"] = location.primaryLocationId
+        ItemAPIClient.shared.perform(path: "secondary-locations/\(location.id)", method: "PUT", jsonBody: body) { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .failure(let e): completion(.failure(e))
+                case .success(let json):
+                    guard let dict = json as? [String: Any], let data = dict["data"],
+                          let model = ItemJSONMapper.object(SecondaryLocationModel.self, from: data) else {
+                        completion(.failure(ItemAPIError.decodeFailed))
+                        return
+                    }
+                    completion(.success(model))
+                }
             }
         }
     }
     
     func deleteSecondaryLocation(id: String, completion: @escaping (Result<Bool, Error>) -> Void) {
-        print("📦 deleteSecondaryLocation called, id: \(id)")
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-            guard let self = self else { return }
-            
-            // 检查是否有物品使用这个位置
-            let itemsInLocation = self.mockDataService.getItems(bySecondaryLocationId: id)
-            if !itemsInLocation.isEmpty {
-                let error = NSError(domain: "ItemDataService",
-                                   code: 400,
-                                   userInfo: [NSLocalizedDescriptionKey: "Cannot delete location, there are \(itemsInLocation.count) items using it"])
-                completion(.failure(error))
-                return
-            }
-            
-            let success = self.mockDataService.deleteSecondaryLocation(id: id)
-            
-            if success {
-                print("📦 Deleted secondary location: \(id)")
-                completion(.success(true))
-            } else {
-                let error = NSError(domain: "ItemDataService",
-                                   code: 404,
-                                   userInfo: [NSLocalizedDescriptionKey: "Secondary location not found"])
-                completion(.failure(error))
+        ItemAPIClient.shared.perform(path: "secondary-locations/\(id)", method: "DELETE") { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .failure(let e): completion(.failure(e))
+                case .success:
+                    completion(.success(true))
+                }
             }
         }
     }
     
     // MARK: - 提醒规则
     func getReminderRules(completion: @escaping ([ReminderRuleModel]) -> Void) {
-        print("📦 getReminderRules called")
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            let rules = [
-                ReminderRuleModel.example(),
-                {
-                    let r = ReminderRuleModel()
-                    r.id = "2"
-                    r.name = "提前1天"
-                    r.daysBefore = 1
-                    r.desc = "过期前1天提醒"
-                    return r
-                }(),
-                {
-                    let r = ReminderRuleModel()
-                    r.id = "3"
-                    r.name = "提前7天"
-                    r.daysBefore = 7
-                    r.desc = "过期前7天提醒"
-                    return r
-                }(),
-                {
-                    let r = ReminderRuleModel()
-                    r.id = "4"
-                    r.name = "不提醒"
-                    r.daysBefore = nil
-                    r.desc = "不设置提醒"
-                    return r
-                }()
-            ]
-            
-            print("📦 Returning \(rules.count) rules")
-            completion(rules)
+        ItemAPIClient.shared.perform(path: "reminder-rules", method: "GET") { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .failure(let e):
+                    print("❌ getReminderRules: \(e.localizedDescription)")
+                    completion([])
+                case .success(let json):
+                    guard let dict = json as? [String: Any], let data = dict["data"] else {
+                        completion([])
+                        return
+                    }
+                    completion(ItemJSONMapper.array(ReminderRuleModel.self, from: data))
+                }
+            }
         }
     }
     
     // MARK: - 物品管理
     func getItems(page: Int = 1,
+                  limit: Int = 20,
                   categoryId: String? = nil,
                   primaryLocationId: String? = nil,
                   secondaryLocationId: String? = nil,
                   keyword: String? = nil,
                   completion: @escaping (Result<ItemsListResponse, Error>) -> Void) {
+        var q: [URLQueryItem] = [
+            URLQueryItem(name: "page", value: "\(page)"),
+            URLQueryItem(name: "limit", value: "\(min(100, max(1, limit)))")
+        ]
+        if let categoryId = categoryId { q.append(URLQueryItem(name: "categoryId", value: categoryId)) }
+        if let primaryLocationId = primaryLocationId { q.append(URLQueryItem(name: "primaryLocationId", value: primaryLocationId)) }
+        if let secondaryLocationId = secondaryLocationId { q.append(URLQueryItem(name: "secondaryLocationId", value: secondaryLocationId)) }
+        if let keyword = keyword, !keyword.isEmpty { q.append(URLQueryItem(name: "keyword", value: keyword)) }
         
-        print("📦 getItems called, page: \(page), categoryId: \(categoryId ?? "nil"), primaryLocationId: \(primaryLocationId ?? "nil"), secondaryLocationId: \(secondaryLocationId ?? "nil"), keyword: \(keyword ?? "nil")")
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-            guard let self = self else { return }
-            
-            // 从 MockDataService 获取所有物品
-            var items = self.mockDataService.getItems()
-            
-            // 根据分类筛选
-            if let categoryId = categoryId {
-                items = items.filter { $0.categoryId == categoryId }
-            }
-            
-            // 根据一级位置筛选
-            if let primaryLocationId = primaryLocationId {
-                items = items.filter { $0.primaryLocationId == primaryLocationId }
-            }
-            
-            // 根据二级位置筛选
-            if let secondaryLocationId = secondaryLocationId {
-                items = items.filter { $0.secondaryLocationId == secondaryLocationId }
-            }
-            
-            // 根据关键词筛选
-            if let keyword = keyword, !keyword.isEmpty {
-                items = items.filter { item in
-                    item.name.localizedCaseInsensitiveContains(keyword) ||
-                    item.remarks?.localizedCaseInsensitiveContains(keyword) == true
+        ItemAPIClient.shared.perform(path: "items", method: "GET", queryItems: q) { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .failure(let e): completion(.failure(e))
+                case .success(let json):
+                    guard let dict = json as? [String: Any],
+                          let itemsArr = dict["items"] as? [[String: Any]] else {
+                        completion(.failure(ItemAPIError.decodeFailed))
+                        return
+                    }
+                    let items = itemsArr.compactMap { ItemModel.deserialize(from: $0) }
+                    let resp = ItemsListResponse()
+                    resp.items = items
+                    if let p = dict["pagination"] as? [String: Any] {
+                        let pag = PaginationModel()
+                        pag.page = p["page"] as? Int ?? 1
+                        pag.limit = p["limit"] as? Int ?? 20
+                        pag.total = p["total"] as? Int ?? 0
+                        pag.pages = p["pages"] as? Int ?? 1
+                        pag.hasNextPage = p["hasNextPage"] as? Bool ?? false
+                        resp.pagination = pag
+                    }
+                    completion(.success(resp))
                 }
             }
-            
-            // 模拟分页
-            let limit = 20
-            let startIndex = (page - 1) * limit
-            let endIndex = min(startIndex + limit, items.count)
-            let paginatedItems = startIndex < items.count ? Array(items[startIndex..<endIndex]) : []
-            
-            let response = ItemsListResponse()
-            response.items = paginatedItems
-            
-            response.pagination = PaginationModel()
-            response.pagination?.page = page
-            response.pagination?.limit = limit
-            response.pagination?.total = items.count
-            response.pagination?.pages = Int(ceil(Double(items.count) / Double(limit)))
-            
-            print("📦 Returning \(response.items.count) items (total: \(items.count))")
-            completion(.success(response))
         }
     }
     
     func createItem(_ item: CreateItemRequest,
                     completion: @escaping (Result<ItemModel, Error>) -> Void) {
-        
-        print("📦 createItem called: \(item.name)")
-        
-        // 验证日期信息
         let validation = item.validateDates()
         if !validation.isValid {
             let error = NSError(domain: "ItemDataService",
                                code: 400,
                                userInfo: [NSLocalizedDescriptionKey: validation.message ?? "日期信息不完整"])
-            print("❌ \(validation.message ?? "日期信息不完整")")
             completion(.failure(error))
             return
         }
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-            guard let self = self else { return }
-            
-            // 创建新物品
-            let newItem = ItemModel()
-            newItem.id = UUID().uuidString
-            newItem.name = item.name
-            newItem.categoryId = item.categoryId
-            newItem.category = self.mockDataService.getCategory(byId: item.categoryId)
-            newItem.quantity = item.quantity
-            newItem.totalPrice = item.totalPrice
-            newItem.unitId = item.unitId
-            newItem.unit = item.unitId.flatMap { self.mockDataService.getUnit(byId: $0) }
-            newItem.remarks = item.remarks
-            
-            // 设置位置
-            newItem.primaryLocationId = item.primaryLocationId
-            newItem.secondaryLocationId = item.secondaryLocationId
-            if let primaryId = item.primaryLocationId {
-                newItem.primaryLocation = self.mockDataService.getPrimaryLocation(byId: primaryId)
-            }
-            if let secondaryId = item.secondaryLocationId {
-                newItem.secondaryLocation = self.mockDataService.getSecondaryLocation(byId: secondaryId)
-            }
-            
-            newItem.createdAt = Date()
-            
-            // 智能处理日期信息
-            if let expiryDate = item.expiryDate {
-                // 用户直接填写了过期日期
-                newItem.expiryDate = expiryDate
-                newItem.productionDate = item.productionDate
-                newItem.shelfLife = item.shelfLife
-            } else if let productionDate = item.productionDate, let shelfLife = item.shelfLife {
-                // 用户填写了生产日期和保质期，自动计算过期日期
-                newItem.productionDate = productionDate
-                newItem.shelfLife = shelfLife
-                newItem.calculateExpiryDate()
-            } else {
-                // 无过期信息
-                newItem.productionDate = item.productionDate
-                newItem.shelfLife = item.shelfLife
-                newItem.expiryDate = nil
-            }
-            
-            // 保存到 MockDataService
-            let success = self.mockDataService.addItem(newItem)
-            
-            if success {
-                print("📦 Created item with id: \(newItem.id)")
-                if let expiryDate = newItem.expiryDate {
-                    print("📦 Expiry date: \(expiryDate)")
-                } else if let shelfLife = newItem.shelfLife {
-                    print("📦 Shelf life: \(shelfLife) days")
-                } else {
-                    print("📦 No expiry information")
+        let body = item.toDictionary()
+        
+        ItemAPIClient.shared.perform(path: "items", method: "POST", jsonBody: body) { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .failure(let e): completion(.failure(e))
+                case .success(let json):
+                    guard let dict = json as? [String: Any], let data = dict["data"],
+                          let model = ItemJSONMapper.object(ItemModel.self, from: data) else {
+                        completion(.failure(ItemAPIError.decodeFailed))
+                        return
+                    }
+                    completion(.success(model))
                 }
-                completion(.success(newItem))
-            } else {
-                let error = NSError(domain: "ItemDataService",
-                                   code: 500,
-                                   userInfo: [NSLocalizedDescriptionKey: "Failed to create item"])
-                completion(.failure(error))
             }
         }
     }
     
     func updateItem(_ item: ItemModel,
                     completion: @escaping (Result<ItemModel, Error>) -> Void) {
-        
-        print("📦 updateItem called: \(item.id)")
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-            guard let self = self else { return }
-            
-            // 确保过期日期是最新的（如果有生产日期和保质期）
-            if let productionDate = item.productionDate, let shelfLife = item.shelfLife {
-                let calculatedExpiry = Calendar.current.date(byAdding: .day, value: shelfLife, to: productionDate)
-                if item.expiryDate != calculatedExpiry {
-                    print("⚠️ Expiry date updated based on production date and shelf life")
-                    item.expiryDate = calculatedExpiry
-                }
+        if let productionDate = item.productionDate, let shelfLife = item.shelfLife {
+            let calculatedExpiry = Calendar.current.date(byAdding: .day, value: shelfLife, to: productionDate)
+            if item.expiryDate != calculatedExpiry {
+                item.expiryDate = calculatedExpiry
             }
-            
-            // 更新到 MockDataService
-            let success = self.mockDataService.updateItem(item)
-            
-            if success {
-                print("📦 Updated item: \(item.name)")
-                completion(.success(item))
-            } else {
-                let error = NSError(domain: "ItemDataService",
-                                   code: 404,
-                                   userInfo: [NSLocalizedDescriptionKey: "Item not found"])
-                completion(.failure(error))
+        }
+        
+        let req = UpdateItemRequest(from: item)
+        let body = req.toDictionary()
+        
+        ItemAPIClient.shared.perform(path: "items/\(item.id)", method: "PUT", jsonBody: body) { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .failure(let e): completion(.failure(e))
+                case .success(let json):
+                    guard let dict = json as? [String: Any], let data = dict["data"],
+                          let model = ItemJSONMapper.object(ItemModel.self, from: data) else {
+                        completion(.failure(ItemAPIError.decodeFailed))
+                        return
+                    }
+                    completion(.success(model))
+                }
             }
         }
     }
     
     func deleteItem(id: String,
                     completion: @escaping (Result<Bool, Error>) -> Void) {
-        
-        print("📦 deleteItem called, id: \(id)")
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-            guard let self = self else { return }
-            
-            // 从 MockDataService 删除
-            let success = self.mockDataService.deleteItem(id: id)
-            
-            if success {
-                print("📦 Deleted item: \(id)")
-                completion(.success(true))
-            } else {
-                let error = NSError(domain: "ItemDataService",
-                                   code: 404,
-                                   userInfo: [NSLocalizedDescriptionKey: "Item not found"])
-                completion(.failure(error))
+        ItemAPIClient.shared.perform(path: "items/\(id)", method: "DELETE") { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .failure(let e): completion(.failure(e))
+                case .success:
+                    completion(.success(true))
+                }
             }
         }
     }
     
     func getItem(id: String, completion: @escaping (Result<ItemModel, Error>) -> Void) {
-        print("📦 getItem called, id: \(id)")
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-            guard let self = self else { return }
-            
-            if let item = self.mockDataService.getItem(byId: id) {
-                print("📦 Returning item: \(item.name)")
-                completion(.success(item))
-            } else {
-                let error = NSError(domain: "ItemDataService",
-                                   code: 404,
-                                   userInfo: [NSLocalizedDescriptionKey: "Item not found"])
-                print("❌ Item not found with id: \(id)")
-                completion(.failure(error))
+        ItemAPIClient.shared.perform(path: "items/\(id)", method: "GET") { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .failure(let e): completion(.failure(e))
+                case .success(let json):
+                    guard let dict = json as? [String: Any], let data = dict["data"],
+                          let model = ItemJSONMapper.object(ItemModel.self, from: data) else {
+                        completion(.failure(ItemAPIError.decodeFailed))
+                        return
+                    }
+                    completion(.success(model))
+                }
             }
         }
     }
 }
 
-// MARK: - 扩展：过期物品相关方法
+// MARK: - 过期相关（客户端基于全量或分页数据计算）
 extension ItemDataService {
     
-    /// 获取指定日期过期的物品
     func getExpiredItems(for date: Date,
                          completion: @escaping (Result<[ItemModel], Error>) -> Void) {
-        
-        print("📦 getExpiredItems called for date: \(date)")
-        
         let calendar = Calendar.current
         let startOfDay = calendar.startOfDay(for: date)
         guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else {
             completion(.success([]))
             return
         }
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
-            guard let self = self else { return }
-            
-            let allItems = self.mockDataService.getItems()
-            let expiredItems = allItems.filter { item in
-                guard let expiryDate = item.expiryDate else { return false }
-                return expiryDate >= startOfDay && expiryDate < endOfDay
+        fetchAllItemsPages { result in
+            switch result {
+            case .failure(let e): completion(.failure(e))
+            case .success(let allItems):
+                let expiredItems = allItems.filter { item in
+                    guard let expiryDate = item.expiryDate else { return false }
+                    return expiryDate >= startOfDay && expiryDate < endOfDay
+                }
+                completion(.success(expiredItems))
             }
-            
-            print("📦 Found \(expiredItems.count) expired items for date \(date)")
-            completion(.success(expiredItems))
         }
     }
     
-    /// 获取即将过期的物品（指定天数内）
     func getUpcomingExpiredItems(days: Int = 7,
                                  completion: @escaping (Result<[ItemModel], Error>) -> Void) {
-        
-        print("📦 getUpcomingExpiredItems called for next \(days) days")
-        
         let calendar = Calendar.current
         let now = Date()
         let endDate = calendar.date(byAdding: .day, value: days, to: now) ?? now
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
-            guard let self = self else { return }
-            
-            let allItems = self.mockDataService.getItems()
-            let upcomingItems = allItems.filter { item in
-                guard let expiryDate = item.expiryDate else { return false }
-                return expiryDate >= now && expiryDate <= endDate
+        fetchAllItemsPages { result in
+            switch result {
+            case .failure(let e): completion(.failure(e))
+            case .success(let allItems):
+                let upcomingItems = allItems.filter { item in
+                    guard let expiryDate = item.expiryDate else { return false }
+                    return expiryDate >= now && expiryDate <= endDate
+                }
+                let sortedItems = upcomingItems.sorted {
+                    ($0.expiryDate ?? Date.distantFuture) < ($1.expiryDate ?? Date.distantFuture)
+                }
+                completion(.success(sortedItems))
             }
-            
-            let sortedItems = upcomingItems.sorted {
-                ($0.expiryDate ?? Date.distantFuture) < ($1.expiryDate ?? Date.distantFuture)
-            }
-            
-            print("📦 Found \(sortedItems.count) upcoming expired items")
-            completion(.success(sortedItems))
         }
     }
     
-    /// 获取已过期的物品
     func getExpiredItems(completion: @escaping (Result<[ItemModel], Error>) -> Void) {
-        
-        print("📦 getExpiredItems called (all expired)")
-        
         let now = Date()
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
-            guard let self = self else { return }
-            
-            let allItems = self.mockDataService.getItems()
-            let expiredItems = allItems.filter { item in
-                guard let expiryDate = item.expiryDate else { return false }
-                return expiryDate < now
+        fetchAllItemsPages { result in
+            switch result {
+            case .failure(let e): completion(.failure(e))
+            case .success(let allItems):
+                let expiredItems = allItems.filter { item in
+                    guard let expiryDate = item.expiryDate else { return false }
+                    return expiryDate < now
+                }
+                let sortedItems = expiredItems.sorted {
+                    ($0.expiryDate ?? Date.distantPast) > ($1.expiryDate ?? Date.distantPast)
+                }
+                completion(.success(sortedItems))
             }
-            
-            let sortedItems = expiredItems.sorted {
-                ($0.expiryDate ?? Date.distantPast) > ($1.expiryDate ?? Date.distantPast)
-            }
-            
-            print("📦 Found \(sortedItems.count) expired items")
-            completion(.success(sortedItems))
         }
     }
     
-    /// 获取指定日期范围的过期物品
     func getExpiredItems(from startDate: Date,
                          to endDate: Date,
                          completion: @escaping (Result<[ItemModel], Error>) -> Void) {
-        
-        print("📦 getExpiredItems called from \(startDate) to \(endDate)")
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
-            guard let self = self else { return }
-            
-            let allItems = self.mockDataService.getItems()
-            let expiredItems = allItems.filter { item in
-                guard let expiryDate = item.expiryDate else { return false }
-                return expiryDate >= startDate && expiryDate <= endDate
+        fetchAllItemsPages { result in
+            switch result {
+            case .failure(let e): completion(.failure(e))
+            case .success(let allItems):
+                let expiredItems = allItems.filter { item in
+                    guard let expiryDate = item.expiryDate else { return false }
+                    return expiryDate >= startDate && expiryDate <= endDate
+                }
+                completion(.success(expiredItems))
             }
-            
-            print("📦 Found \(expiredItems.count) expired items in date range")
-            completion(.success(expiredItems))
         }
     }
     
-    /// 按月份分组获取过期物品
     func getExpiredItemsGroupedByDay(forYear year: Int,
                                       month: Int,
                                       completion: @escaping (Result<[Int: [ItemModel]], Error>) -> Void) {
-        
-        print("📦 getExpiredItemsGroupedByDay called for \(year)-\(month)")
-        
         var components = DateComponents()
         components.year = year
         components.month = month
         components.day = 1
-        
         let calendar = Calendar.current
         guard let startOfMonth = calendar.date(from: components),
               let endOfMonth = calendar.date(byAdding: DateComponents(month: 1, day: -1), to: startOfMonth) else {
             completion(.success([:]))
             return
         }
-        
         let endOfDay = calendar.date(byAdding: .day, value: 1, to: endOfMonth) ?? endOfMonth
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
-            guard let self = self else { return }
-            
-            let allItems = self.mockDataService.getItems()
-            let monthItems = allItems.filter { item in
-                guard let expiryDate = item.expiryDate else { return false }
-                return expiryDate >= startOfMonth && expiryDate < endOfDay
-            }
-            
-            var groupedItems: [Int: [ItemModel]] = [:]
-            
-            for item in monthItems {
-                guard let expiryDate = item.expiryDate else { continue }
-                let day = calendar.component(.day, from: expiryDate)
-                
-                if groupedItems[day] == nil {
-                    groupedItems[day] = []
+        fetchAllItemsPages { result in
+            switch result {
+            case .failure(let e): completion(.failure(e))
+            case .success(let allItems):
+                let monthItems = allItems.filter { item in
+                    guard let expiryDate = item.expiryDate else { return false }
+                    return expiryDate >= startOfMonth && expiryDate < endOfDay
                 }
-                groupedItems[day]?.append(item)
+                var groupedItems: [Int: [ItemModel]] = [:]
+                for item in monthItems {
+                    guard let expiryDate = item.expiryDate else { continue }
+                    let day = calendar.component(.day, from: expiryDate)
+                    if groupedItems[day] == nil { groupedItems[day] = [] }
+                    groupedItems[day]?.append(item)
+                }
+                completion(.success(groupedItems))
             }
-            
-            print("📦 Found items in \(groupedItems.count) days of month \(month)")
-            completion(.success(groupedItems))
         }
     }
     
-    /// 获取过期物品统计信息
     func getExpiredItemsStatistics(completion: @escaping (Result<ExpiredItemsStatistics, Error>) -> Void) {
-        
-        print("📦 getExpiredItemsStatistics called")
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
-            guard let self = self else { return }
-            
-            let allItems = self.mockDataService.getItems()
-            let now = Date()
-            let calendar = Calendar.current
-            
-            var statistics = ExpiredItemsStatistics()
-            
-            for item in allItems {
-                guard let expiryDate = item.expiryDate else { continue }
-                
-                let daysUntilExpire = calendar.dateComponents([.day], from: now, to: expiryDate).day ?? 0
-                
-                if daysUntilExpire < 0 {
-                    statistics.expiredCount += 1
-                    statistics.expiredItems.append(item)
-                } else if daysUntilExpire <= 3 {
-                    statistics.soonExpiredCount += 1
-                    statistics.soonExpiredItems.append(item)
-                } else if daysUntilExpire <= 7 {
-                    statistics.weekExpiredCount += 1
+        fetchAllItemsPages { result in
+            switch result {
+            case .failure(let e): completion(.failure(e))
+            case .success(let allItems):
+                let now = Date()
+                let calendar = Calendar.current
+                var statistics = ExpiredItemsStatistics()
+                for item in allItems {
+                    guard let expiryDate = item.expiryDate else { continue }
+                    let daysUntilExpire = calendar.dateComponents([.day], from: now, to: expiryDate).day ?? 0
+                    if daysUntilExpire < 0 {
+                        statistics.expiredCount += 1
+                        statistics.expiredItems.append(item)
+                    } else if daysUntilExpire <= 3 {
+                        statistics.soonExpiredCount += 1
+                        statistics.soonExpiredItems.append(item)
+                    } else if daysUntilExpire <= 7 {
+                        statistics.weekExpiredCount += 1
+                    }
+                    let categoryId = item.categoryId
+                    statistics.categoryCount[categoryId, default: 0] += 1
                 }
-                
-                let categoryId = item.categoryId
-                statistics.categoryCount[categoryId, default: 0] += 1
+                completion(.success(statistics))
             }
-            
-            print("📦 Statistics: expired=\(statistics.expiredCount), soon=\(statistics.soonExpiredCount)")
-            completion(.success(statistics))
         }
     }
 }
 
-// MARK: - 统计信息模型
 struct ExpiredItemsStatistics {
     var expiredCount: Int = 0
     var soonExpiredCount: Int = 0

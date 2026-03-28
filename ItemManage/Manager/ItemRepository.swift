@@ -29,14 +29,22 @@ class ItemRepository: ObservableObject {
     
     // MARK: - 数据加载
     func loadData() {
-        // 从 MockDataService 或 API 加载
-        allItems = MockDataService.shared.getItems()
-        categories = MockDataService.shared.getCategories()
-        units = MockDataService.shared.getUnits() ?? []
-        primaryLocations = MockDataService.shared.getPrimaryLocations()
-        secondaryLocations = MockDataService.shared.getSecondaryLocations()
-        
-        buildIndexes()
+        ItemDataService.shared.loadFullSnapshot { [weak self] result in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                switch result {
+                case .success(let snapshot):
+                    self.allItems = snapshot.items
+                    self.categories = snapshot.categories
+                    self.units = snapshot.units
+                    self.primaryLocations = snapshot.primaryLocations
+                    self.secondaryLocations = snapshot.secondaryLocations
+                    self.buildIndexes()
+                case .failure(let error):
+                    print("❌ ItemRepository loadData: \(error.localizedDescription)")
+                }
+            }
+        }
     }
     
     private func buildIndexes() {
@@ -130,6 +138,10 @@ class ItemRepository: ObservableObject {
                 switch result {
                 case .success(let savedLocation):
                     print("✅ API保存一级位置成功: \(savedLocation.name)")
+                    if let idx = self.primaryLocations.firstIndex(where: { $0.id == location.id }) {
+                        self.primaryLocations[idx] = savedLocation
+                    }
+                    self.buildIndexes()
                 case .failure(let error):
                     print("❌ API保存一级位置失败: \(error)")
                     // API失败，回滚本地数据
@@ -212,6 +224,10 @@ class ItemRepository: ObservableObject {
                 switch result {
                 case .success(let savedLocation):
                     print("✅ API保存二级位置成功: \(savedLocation.name)")
+                    if let idx = self.secondaryLocations.firstIndex(where: { $0.id == location.id }) {
+                        self.secondaryLocations[idx] = savedLocation
+                    }
+                    self.buildIndexes()
                 case .failure(let error):
                     print("❌ API保存二级位置失败: \(error)")
                     // API失败，回滚本地数据
@@ -302,6 +318,11 @@ class ItemRepository: ObservableObject {
                 switch result {
                 case .success(let savedItem):
                     print("✅ API保存成功: \(savedItem.id)")
+                    guard let self = self else { return }
+                    if let idx = self.allItems.firstIndex(where: { $0.id == item.id }) {
+                        self.allItems[idx] = savedItem
+                    }
+                    self.buildIndexes()
                 case .failure(let error):
                     print("❌ API保存失败: \(error)")
                     // API失败，回滚本地数据
@@ -360,6 +381,11 @@ class ItemRepository: ObservableObject {
                 switch result {
                 case .success(let updatedItem):
                     print("✅ API更新成功: \(updatedItem.id)")
+                    guard let self = self else { return }
+                    if let idx = self.allItems.firstIndex(where: { $0.id == updatedItem.id }) {
+                        self.allItems[idx] = updatedItem
+                    }
+                    self.buildIndexes()
                 case .failure(let error):
                     print("❌ API更新失败: \(error)")
                     // API失败，重新加载数据回滚
