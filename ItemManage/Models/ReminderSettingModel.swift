@@ -20,9 +20,12 @@ class ReminderSettingModel: HandyJSON {
     required init() {}
     
     // 是否启用提醒
-    var isEnabled: Bool {
-        return ruleId != nil && !(ruleId?.isEmpty ?? true)
-    }
+//    var isEnabled: Bool {
+//        return ruleId != nil && !(ruleId?.isEmpty ?? true)
+//    }
+    
+    // 是否启用提醒
+    var isEnabled: Bool = false
     
     // 获取提醒描述
     var reminderDescription: String {

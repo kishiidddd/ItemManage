@@ -1125,6 +1125,10 @@ class AddItemViewController: UIViewController {
         viewModel.loadInitialData()
     }
     
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+    
     // MARK: - Setup UI
     private func setupUI() {
         view.backgroundColor = .systemGroupedBackground
@@ -1260,11 +1264,12 @@ class AddItemViewController: UIViewController {
             }
             .store(in: &cancellables)
         
-        // 监听二级位置数据（当一级位置改变时更新）
-        viewModel.$availableSecondaryLocations
+        // 二级位置列表来自计算属性，无 $publisher；随一级位置或位置数据源变化刷新
+        Publishers.CombineLatest(viewModel.$selectedPrimaryLocation, viewModel.$primaryLocations)
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] locations in
-                self?.updateSecondaryLocationFieldState(locations)
+            .sink { [weak self] _, _ in
+                guard let self = self else { return }
+                self.updateSecondaryLocationFieldState(self.viewModel.availableSecondaryLocations)
             }
             .store(in: &cancellables)
         
@@ -1458,18 +1463,18 @@ class AddItemViewController: UIViewController {
     @objc private func saveButtonTapped() {
         viewModel.saveItem { [weak self] result in
             DispatchQueue.main.async {
+                guard let self = self else { return }
                 switch result {
                 case .success(let item):
-                    if self?.viewModel.isEditing == true {
-                        self?.repository.updateItem(item)
+                    if self.viewModel.isEditing {
+                        self.repository.updateItem(item)
                     } else {
-                        self?.repository.addItem(item)
+                        self.repository.addItem(item)
                     }
-                    
-                    self?.delegate?.addItemViewControllerDidSave(self!, item: item)
-                    self?.navigationController?.popViewController(animated: true)
+                    self.delegate?.addItemViewControllerDidSave(self, item: item)
+                    self.navigationController?.popViewController(animated: true)
                 case .failure(let error):
-                    self?.showError(error.localizedDescription)
+                    self.showError(error.localizedDescription)
                 }
             }
         }
@@ -1708,9 +1713,9 @@ class AddItemViewController: UIViewController {
         alert.addAction(UIAlertAction(title: "确定", style: .default) { [weak self] _ in
             let selectedDate = datePicker.date
             if field == .production {
-                self?.viewModel.productionDate = selectedDate
+                self?.viewModel.updateProductionDate(selectedDate)
             } else {
-                self?.viewModel.expiryDate = selectedDate
+                self?.viewModel.updateExpiryDate(selectedDate)
             }
         })
         

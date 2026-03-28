@@ -310,7 +310,7 @@ class AddItemViewModel: ObservableObject {
     @Published var quantity: Int = 1
     @Published var totalPrice: String = ""
     @Published var selectedUnit: UnitModel?
-    @Published var photos: [String] = []
+    @Published var photos: [PhotoModel] = []
     @Published var productionDate: Date?
     @Published var expiryDate: Date?
     @Published var shelfLife: Int?
@@ -328,6 +328,11 @@ class AddItemViewModel: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
     @Published var isFormValid: Bool = false
+    
+    enum DateField {
+        case production
+        case expiry
+    }
     
     // MARK: - 计算属性
     var isEditing: Bool {
@@ -371,10 +376,6 @@ class AddItemViewModel: ObservableObject {
     // MARK: - Init
     init(item: ItemModel? = nil) {
         self.editingItem = item
-        if let item = item {
-            loadItemData(item)
-        }
-        
         setupValidation()
         loadDataFromRepository()
     }
@@ -413,12 +414,16 @@ class AddItemViewModel: ObservableObject {
     
     func addPhoto(localPath: String) {
         guard canAddMorePhotos else { return }
-        photos.append(localPath)
+        let photo = PhotoModel(localPath: localPath, sortOrder: photos.count)
+        photos.append(photo)
     }
     
     func removePhoto(at index: Int) {
         guard index < photos.count else { return }
         photos.remove(at: index)
+        for (i, p) in photos.enumerated() {
+            p.sortOrder = i
+        }
     }
     
     func movePhoto(from fromIndex: Int, to toIndex: Int) {
@@ -427,6 +432,9 @@ class AddItemViewModel: ObservableObject {
               toIndex < photos.count else { return }
         let photo = photos.remove(at: fromIndex)
         photos.insert(photo, at: toIndex)
+        for (i, p) in photos.enumerated() {
+            p.sortOrder = i
+        }
     }
     
     func saveItem(completion: @escaping (Result<ItemModel, Error>) -> Void) {
@@ -469,8 +477,7 @@ class AddItemViewModel: ObservableObject {
             selectedSecondaryLocation = repository.secondaryLocations.first { $0.id == secondaryLocationId }
         }
         
-        // 加载照片
-        photos = item.photos.map { $0.url }
+        photos = item.photos
         
         productionDate = item.productionDate
         expiryDate = item.expiryDate
@@ -492,11 +499,19 @@ class AddItemViewModel: ObservableObject {
         categories = repository.categories
         units = repository.units
         primaryLocations = repository.primaryLocations
-        reminderRules = MockDataService.shared.getReminderRules()
         
-        // 如果是编辑模式，确保数据已经加载
         if let item = editingItem {
             loadItemData(item)
+        }
+        
+        ItemDataService.shared.getReminderRules { [weak self] rules in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                self.reminderRules = rules
+                if let item = self.editingItem {
+                    self.loadItemData(item)
+                }
+            }
         }
     }
     
@@ -506,6 +521,9 @@ class AddItemViewModel: ObservableObject {
         if let editingItem = editingItem {
             item.id = editingItem.id
             item.createdAt = editingItem.createdAt
+        } else {
+            item.id = UUID().uuidString
+            item.createdAt = Date()
         }
         
         item.name = name.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -523,14 +541,8 @@ class AddItemViewModel: ObservableObject {
         item.primaryLocationId = selectedPrimaryLocation?.id
         item.secondaryLocationId = selectedSecondaryLocation?.id
         
-        // 设置照片
         if !photos.isEmpty {
-            item.photos = photos.enumerated().map { index, url in
-                let photo = PhotoModel()
-                photo.url = url
-                photo.sortOrder = index
-                return photo
-            }
+            item.photos = photos
         }
         
         // 设置日期信息
