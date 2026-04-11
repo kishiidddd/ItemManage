@@ -16,13 +16,13 @@ class CalculateViewController: UIViewController {
 
     enum ChartType: Int, CaseIterable {
         case category = 0
-        case primaryLocation = 1
+        case expired = 1
         case secondaryLocation = 2
 
         var title: String {
             switch self {
             case .category: return "数量统计"
-            case .primaryLocation: return "一级位置"
+            case .expired: return "过期物品"
             case .secondaryLocation: return "二级位置"
             }
         }
@@ -66,15 +66,15 @@ class CalculateViewController: UIViewController {
         return card
     }()
 
-    private lazy var primaryTaggedCard: StatsCardView = {
+    private lazy var expiredCountCard: StatsCardView = {
         let card = StatsCardView()
-        card.configure(title: "含一级位置", value: "0")
+        card.configure(title: "过期物品", value: "0")
         return card
     }()
 
-    private lazy var expiredCard: StatsCardView = {
+    private lazy var expiringSoonCard: StatsCardView = {
         let card = StatsCardView()
-        card.configure(title: "过期物品", value: "0")
+        card.configure(title: "即将过期物品", value: "0")
         return card
     }()
 
@@ -103,8 +103,8 @@ class CalculateViewController: UIViewController {
         return button
     }()
 
-    private lazy var primaryLocationButton: UIButton = {
-        let button = createChartTypeButton(title: ChartType.primaryLocation.title, tag: ChartType.primaryLocation.rawValue)
+    private lazy var expiredChartButton: UIButton = {
+        let button = createChartTypeButton(title: ChartType.expired.title, tag: ChartType.expired.rawValue)
         return button
     }()
 
@@ -129,6 +129,9 @@ class CalculateViewController: UIViewController {
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
+        navigationItem.title = nil
+        navigationItem.largeTitleDisplayMode = .never
+        view.backgroundColor = .systemBackground
         setupUI()
         setupConstraints()
         applyStatistics()
@@ -137,6 +140,8 @@ class CalculateViewController: UIViewController {
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        // 本 Tab 使用独立 NavigationController，仅影响「统计」页
+        navigationController?.setNavigationBarHidden(true, animated: animated)
         loadStatsData()
     }
 
@@ -150,14 +155,14 @@ class CalculateViewController: UIViewController {
 
         contentView.addSubview(statsStackView)
         statsStackView.addArrangedSubview(countCard)
-        statsStackView.addArrangedSubview(primaryTaggedCard)
-        statsStackView.addArrangedSubview(expiredCard)
+        statsStackView.addArrangedSubview(expiredCountCard)
+        statsStackView.addArrangedSubview(expiringSoonCard)
 
         contentView.addSubview(chartTitleLabel)
 
         contentView.addSubview(chartTypeStackView)
         chartTypeStackView.addArrangedSubview(categoryButton)
-        chartTypeStackView.addArrangedSubview(primaryLocationButton)
+        chartTypeStackView.addArrangedSubview(expiredChartButton)
         chartTypeStackView.addArrangedSubview(secondaryLocationButton)
 
         contentView.addSubview(chartContainerView)
@@ -165,7 +170,8 @@ class CalculateViewController: UIViewController {
 
     private func setupConstraints() {
         scrollView.snp.makeConstraints { make in
-            make.edges.equalToSuperview()
+            make.top.equalTo(view.safeAreaLayoutGuide.snp.top)
+            make.left.right.bottom.equalToSuperview()
         }
 
         contentView.snp.makeConstraints { make in
@@ -174,8 +180,8 @@ class CalculateViewController: UIViewController {
         }
 
         titleLabel.snp.makeConstraints { make in
-            make.top.equalTo(contentView).offset(20)
-            make.left.equalTo(contentView).offset(20)
+            make.top.equalTo(contentView).offset(8)
+            make.centerX.equalTo(contentView)
         }
 
         statsStackView.snp.makeConstraints { make in
@@ -233,10 +239,10 @@ class CalculateViewController: UIViewController {
         chartData = StatisticsData.build(items: items, repository: repo)
 
         countCard.updateValue("\(items.count)")
-        let primaryTagged = items.filter { !($0.primaryLocationId ?? "").isEmpty }.count
-        primaryTaggedCard.updateValue("\(primaryTagged)")
         let expiredCount = items.filter { $0.isExpired }.count
-        expiredCard.updateValue("\(expiredCount)")
+        expiredCountCard.updateValue("\(expiredCount)")
+        let soonCount = items.filter { $0.isExpiringSoon }.count
+        expiringSoonCard.updateValue("\(soonCount)")
 
         showChart(type: currentChartType)
     }
@@ -249,8 +255,8 @@ class CalculateViewController: UIViewController {
         switch type {
         case .category:
             rows = chartData.categoryData
-        case .primaryLocation:
-            rows = chartData.primaryLocationData
+        case .expired:
+            rows = chartData.expiryDistributionData
         case .secondaryLocation:
             rows = chartData.secondaryLocationData
         }
@@ -266,7 +272,7 @@ class CalculateViewController: UIViewController {
 
     // MARK: - Actions
     @objc private func chartTypeButtonTapped(_ sender: UIButton) {
-        [categoryButton, primaryLocationButton, secondaryLocationButton].forEach { button in
+        [categoryButton, expiredChartButton, secondaryLocationButton].forEach { button in
             button.isSelected = false
             button.backgroundColor = .white
             button.setTitleColor(.gray, for: .normal)
@@ -346,7 +352,8 @@ class StatsCardView: UIView {
 // MARK: - 数据模型
 struct StatisticsData {
     let categoryData: [DistributionStat]
-    let primaryLocationData: [DistributionStat]
+    /// 按过期状态：已过期 / 即将过期 / 未临期 / 无过期时间
+    let expiryDistributionData: [DistributionStat]
     let secondaryLocationData: [DistributionStat]
 
     struct DistributionStat {
@@ -356,7 +363,7 @@ struct StatisticsData {
         let color: UIColor
     }
 
-    static let empty = StatisticsData(categoryData: [], primaryLocationData: [], secondaryLocationData: [])
+    static let empty = StatisticsData(categoryData: [], expiryDistributionData: [], secondaryLocationData: [])
 
     private static let palette: [UIColor] = [
         .systemBlue, .systemGreen, .systemOrange, .systemPurple,
@@ -370,7 +377,7 @@ struct StatisticsData {
             let placeholder = DistributionStat(name: "暂无物品", count: 0, total: 1, color: .systemGray3)
             return StatisticsData(
                 categoryData: [placeholder],
-                primaryLocationData: [placeholder],
+                expiryDistributionData: [placeholder],
                 secondaryLocationData: [placeholder]
             )
         }
@@ -393,30 +400,25 @@ struct StatisticsData {
                 )
             }
 
-        // 一级位置
-        let byPrimary = Dictionary(grouping: items) { $0.primaryLocationId ?? "" }
-        let primaryLocationData: [DistributionStat] = byPrimary
-            .map { key, arr -> (String, [ItemModel]) in
-                let name: String
-                if key.isEmpty {
-                    name = "未设置一级位置"
-                } else if let loc = repository.getPrimaryLocation(byId: key) {
-                    name = loc.name
-                } else {
-                    name = "未知一级位置"
-                }
-                return (name, arr)
-            }
-            .sorted { $0.1.count > $1.1.count }
-            .enumerated()
-            .map { idx, pair in
-                DistributionStat(
-                    name: pair.0,
-                    count: pair.1.count,
-                    total: totalCount,
-                    color: palette[idx % palette.count]
-                )
-            }
+        // 过期状态分布（与首页「已过期 / 即将过期」规则一致：即将=0～3 天且未过期）
+        func expiryBucketName(for item: ItemModel) -> String {
+            if item.expiryDate == nil { return "无过期时间" }
+            if item.isExpired { return "已过期" }
+            if item.isExpiringSoon { return "即将过期" }
+            return "未临期"
+        }
+        let expiryOrder = ["已过期", "即将过期", "未临期", "无过期时间"]
+        let byExpiry = Dictionary(grouping: items, by: expiryBucketName(for:))
+        let expiryDistributionData: [DistributionStat] = expiryOrder.compactMap { key in
+            guard let arr = byExpiry[key], !arr.isEmpty else { return nil }
+            let idx = expiryOrder.firstIndex(of: key) ?? 0
+            return DistributionStat(
+                name: key,
+                count: arr.count,
+                total: totalCount,
+                color: palette[idx % palette.count]
+            )
+        }
 
         // 二级位置
         let bySecondary = Dictionary(grouping: items) { $0.secondaryLocationId ?? "" }
@@ -445,12 +447,12 @@ struct StatisticsData {
 
         return StatisticsData(
             categoryData: categoryData,
-            primaryLocationData: primaryLocationData,
+            expiryDistributionData: expiryDistributionData,
             secondaryLocationData: secondaryLocationData
         )
     }
 }
-// MARK: - 分布条形图（分类 / 一级位置 / 二级位置，高度随内容撑开，由外层页面 ScrollView 滚动）
+// MARK: - 分布条形图（分类 / 过期状态 / 二级位置，高度随内容撑开，由外层页面 ScrollView 滚动）
 class DistributionBarChartView: UIView {
 
     private let data: [StatisticsData.DistributionStat]
