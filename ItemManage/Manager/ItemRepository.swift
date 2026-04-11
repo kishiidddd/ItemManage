@@ -110,6 +110,11 @@ class ItemRepository: ObservableObject {
     func getItem(byId id: String) -> ItemModel? {
         return itemsById[id]
     }
+
+    /// 全部物品（用于统计等只读场景）
+    func getAllItems() -> [ItemModel] {
+        return allItems
+    }
     
     func getItems(byCategoryId categoryId: String) -> [ItemModel] {
         return itemsByCategory[categoryId] ?? []
