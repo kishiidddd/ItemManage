@@ -7,28 +7,25 @@
 
 import UIKit
 import SnapKit
+import Combine
 
 class LocationManagementViewController: UIViewController {
-    
-    // MARK: - Properties
-    private var primaryLocations: [PrimaryLocationModel] = []
-    private var secondaryLocations: [SecondaryLocationModel] = []
-    private var selectedPrimaryLocationId: String?
-    
-    // MARK: - UI Elements
+
+    private let viewModel = LocationManagementViewModel()
+    private var cancellables = Set<AnyCancellable>()
+
     private lazy var splitContainer: UIView = {
         let view = UIView()
         view.backgroundColor = .systemGroupedBackground
         return view
     }()
-    
-    // 左侧：一级位置列表
+
     private lazy var leftContainer: UIView = {
         let view = UIView()
         view.backgroundColor = .systemBackground
         return view
     }()
-    
+
     private lazy var leftTitleLabel: UILabel = {
         let label = UILabel()
         label.text = "一级位置"
@@ -36,7 +33,7 @@ class LocationManagementViewController: UIViewController {
         label.textColor = .label
         return label
     }()
-    
+
     private lazy var leftTableView: UITableView = {
         let tv = UITableView(frame: .zero, style: .plain)
         tv.backgroundColor = .systemBackground
@@ -46,7 +43,7 @@ class LocationManagementViewController: UIViewController {
         tv.separatorStyle = .singleLine
         return tv
     }()
-    
+
     private lazy var addPrimaryButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("添加一级位置", for: .normal)
@@ -58,14 +55,13 @@ class LocationManagementViewController: UIViewController {
         button.addTarget(self, action: #selector(addPrimaryLocationTapped), for: .touchUpInside)
         return button
     }()
-    
-    // 右侧：二级位置列表
+
     private lazy var rightContainer: UIView = {
         let view = UIView()
         view.backgroundColor = .systemBackground
         return view
     }()
-    
+
     private lazy var rightTitleLabel: UILabel = {
         let label = UILabel()
         label.text = "二级位置"
@@ -73,7 +69,7 @@ class LocationManagementViewController: UIViewController {
         label.textColor = .label
         return label
     }()
-    
+
     private lazy var rightTableView: UITableView = {
         let tv = UITableView(frame: .zero, style: .plain)
         tv.backgroundColor = .systemBackground
@@ -83,7 +79,7 @@ class LocationManagementViewController: UIViewController {
         tv.separatorStyle = .singleLine
         return tv
     }()
-    
+
     private lazy var addSecondaryButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("添加二级位置", for: .normal)
@@ -95,7 +91,7 @@ class LocationManagementViewController: UIViewController {
         button.addTarget(self, action: #selector(addSecondaryLocationTapped), for: .touchUpInside)
         return button
     }()
-    
+
     private lazy var emptyStateLabel: UILabel = {
         let label = UILabel()
         label.text = "请先选择一级位置"
@@ -105,40 +101,35 @@ class LocationManagementViewController: UIViewController {
         label.isHidden = true
         return label
     }()
-    
-    // MARK: - Lifecycle
+
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        loadData()
+        bindViewModel()
+        viewModel.load()
     }
-    
-    // MARK: - Setup UI
+
     private func setupUI() {
         view.backgroundColor = .systemGroupedBackground
         title = "位置管理"
-        
-        // 添加分割视图
+
         view.addSubview(splitContainer)
         splitContainer.snp.makeConstraints { make in
             make.edges.equalToSuperview()
         }
-        
-        // 左侧容器
+
         splitContainer.addSubview(leftContainer)
         leftContainer.snp.makeConstraints { make in
             make.left.top.bottom.equalToSuperview()
             make.width.equalToSuperview().multipliedBy(0.5)
         }
-        
-        // 右侧容器
+
         splitContainer.addSubview(rightContainer)
         rightContainer.snp.makeConstraints { make in
             make.right.top.bottom.equalToSuperview()
             make.width.equalToSuperview().multipliedBy(0.5)
         }
-        
-        // 添加分割线
+
         let dividerLine = UIView()
         dividerLine.backgroundColor = UIColor.separator
         splitContainer.addSubview(dividerLine)
@@ -147,28 +138,25 @@ class LocationManagementViewController: UIViewController {
             make.top.bottom.equalToSuperview()
             make.width.equalTo(0.5)
         }
-        
+
         setupLeftView()
         setupRightView()
     }
-    
+
     private func setupLeftView() {
-        // 添加标题
         leftContainer.addSubview(leftTitleLabel)
         leftTitleLabel.snp.makeConstraints { make in
             make.top.equalTo(leftContainer.safeAreaLayoutGuide.snp.top).offset(12)
             make.left.right.equalToSuperview().inset(16)
         }
-        
-        // 添加按钮
+
         leftContainer.addSubview(addPrimaryButton)
         addPrimaryButton.snp.makeConstraints { make in
             make.left.right.equalToSuperview().inset(16)
             make.bottom.equalTo(leftContainer.safeAreaLayoutGuide.snp.bottom).offset(-12)
             make.height.equalTo(44)
         }
-        
-        // 添加表格视图，约束在标题和按钮之间
+
         leftContainer.addSubview(leftTableView)
         leftTableView.snp.makeConstraints { make in
             make.top.equalTo(leftTitleLabel.snp.bottom).offset(12)
@@ -176,263 +164,196 @@ class LocationManagementViewController: UIViewController {
             make.bottom.equalTo(addPrimaryButton.snp.top).offset(-12)
         }
     }
-    
+
     private func setupRightView() {
-        // 添加标题
         rightContainer.addSubview(rightTitleLabel)
         rightTitleLabel.snp.makeConstraints { make in
             make.top.equalTo(rightContainer.safeAreaLayoutGuide.snp.top).offset(12)
             make.left.right.equalToSuperview().inset(16)
         }
-        
-        // 添加按钮
+
         rightContainer.addSubview(addSecondaryButton)
         addSecondaryButton.snp.makeConstraints { make in
             make.left.right.equalToSuperview().inset(16)
             make.bottom.equalTo(rightContainer.safeAreaLayoutGuide.snp.bottom).offset(-12)
             make.height.equalTo(44)
         }
-        
-        // 添加表格视图，约束在标题和按钮之间
+
         rightContainer.addSubview(rightTableView)
         rightTableView.snp.makeConstraints { make in
             make.top.equalTo(rightTitleLabel.snp.bottom).offset(12)
             make.left.right.equalToSuperview()
             make.bottom.equalTo(addSecondaryButton.snp.top).offset(-12)
         }
-        
-        // 添加空状态标签
+
         rightContainer.addSubview(emptyStateLabel)
         emptyStateLabel.snp.makeConstraints { make in
             make.center.equalTo(rightTableView)
         }
     }
-    
-    // MARK: - Data Loading
-    private func loadData() {
-        // 从 Repository 加载数据
-        primaryLocations = ItemRepository.shared.getPrimaryLocations()
-        leftTableView.reloadData()
-        
-        // 默认选中第一个一级位置
-        if let first = primaryLocations.first {
-            selectedPrimaryLocationId = first.id
-            loadSecondaryLocations()
-        } else {
-            selectedPrimaryLocationId = nil
-            secondaryLocations = []
-            rightTableView.reloadData()
-            updateEmptyState()
+
+    private func bindViewModel() {
+        Publishers.CombineLatest3(
+            viewModel.$primaryLocations,
+            viewModel.$secondaryLocations,
+            viewModel.$selectedPrimaryLocationId
+        )
+        .receive(on: DispatchQueue.main)
+        .sink { [weak self] _, _, _ in
+            guard let self = self else { return }
+            self.leftTableView.reloadData()
+            self.rightTableView.reloadData()
+            self.updateEmptyState()
         }
+        .store(in: &cancellables)
+
+        viewModel.$infoMessage
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] message in
+                guard let self = self, let message = message, !message.isEmpty else { return }
+                self.showAlert(message: message)
+                self.viewModel.clearInfoMessage()
+            }
+            .store(in: &cancellables)
     }
-    
-    private func loadSecondaryLocations() {
-        guard let primaryId = selectedPrimaryLocationId else {
-            secondaryLocations = []
-            rightTableView.reloadData()
-            updateEmptyState()
-            return
-        }
-        
-        secondaryLocations = ItemRepository.shared.getSecondaryLocations(for: primaryId)
-        rightTableView.reloadData()
-        updateEmptyState()
-    }
-    
+
     private func updateEmptyState() {
-        emptyStateLabel.isHidden = selectedPrimaryLocationId != nil && !secondaryLocations.isEmpty
-        rightTableView.isHidden = selectedPrimaryLocationId == nil && secondaryLocations.isEmpty
+        emptyStateLabel.isHidden = !viewModel.shouldShowEmptyLabel
+        rightTableView.isHidden = viewModel.shouldHideRightTable
     }
-    
-    // MARK: - Actions
+
     @objc private func addPrimaryLocationTapped() {
         let alert = UIAlertController(title: "添加一级位置", message: nil, preferredStyle: .alert)
         alert.addTextField { textField in
             textField.placeholder = "位置名称（如：冰箱、衣柜）"
         }
-        
+
         let addAction = UIAlertAction(title: "添加", style: .default) { [weak self] _ in
-            guard let name = alert.textFields?.first?.text, !name.isEmpty else { return }
-            
-            let newLocation = PrimaryLocationModel()
-            newLocation.id = UUID().uuidString
-            newLocation.name = name
-            newLocation.icon = "📍"
-            newLocation.color = "#2196F3"
-            newLocation.sortOrder = self?.primaryLocations.count ?? 0
-            
-            ItemRepository.shared.addPrimaryLocation(newLocation)
-            
-            self?.primaryLocations = ItemRepository.shared.getPrimaryLocations()
-            self?.leftTableView.reloadData()
-            
-            // 如果这是第一个位置，自动选中
-            if self?.selectedPrimaryLocationId == nil {
-                self?.selectedPrimaryLocationId = newLocation.id
-                self?.loadSecondaryLocations()
-            }
+            guard let name = alert.textFields?.first?.text else { return }
+            self?.viewModel.addPrimaryLocation(name: name)
         }
-        
+
         alert.addAction(addAction)
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))
-        
+
         present(alert, animated: true)
     }
-    
+
     @objc private func addSecondaryLocationTapped() {
-        guard let primaryId = selectedPrimaryLocationId,
-              let primaryLocation = primaryLocations.first(where: { $0.id == primaryId }) else {
+        guard let primaryId = viewModel.selectedPrimaryLocationId,
+              let primaryLocation = viewModel.primaryLocations.first(where: { $0.id == primaryId }) else {
             showAlert(message: "请先选择一级位置")
             return
         }
-        
+
         let alert = UIAlertController(title: "添加二级位置", message: "位置：\(primaryLocation.name)", preferredStyle: .alert)
         alert.addTextField { textField in
             textField.placeholder = "位置名称（如：冷藏层、挂衣区）"
         }
-        
+
         let addAction = UIAlertAction(title: "添加", style: .default) { [weak self] _ in
-            guard let name = alert.textFields?.first?.text, !name.isEmpty else { return }
-            
-            let newLocation = SecondaryLocationModel()
-            newLocation.id = UUID().uuidString
-            newLocation.name = name
-            newLocation.primaryLocationId = primaryId
-            newLocation.icon = "📦"
-            newLocation.color = "#4CAF50"
-            newLocation.sortOrder = self?.secondaryLocations.count ?? 0
-            
-            ItemRepository.shared.addSecondaryLocation(newLocation)
-            
-            self?.loadSecondaryLocations()
+            guard let name = alert.textFields?.first?.text else { return }
+            self?.viewModel.addSecondaryLocation(name: name)
         }
-        
+
         alert.addAction(addAction)
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))
-        
+
         present(alert, animated: true)
     }
-    
+
     @objc private func editPrimaryLocation(_ sender: UIButton) {
         let index = sender.tag
-        guard index < primaryLocations.count else { return }
-        let location = primaryLocations[index]
-        
+        guard index < viewModel.primaryLocations.count else { return }
+        let location = viewModel.primaryLocations[index]
+
         let alert = UIAlertController(title: "编辑一级位置", message: nil, preferredStyle: .alert)
         alert.addTextField { textField in
             textField.text = location.name
             textField.placeholder = "位置名称"
         }
-        
+
         let saveAction = UIAlertAction(title: "保存", style: .default) { [weak self] _ in
-            guard let newName = alert.textFields?.first?.text, !newName.isEmpty else { return }
-            
-            location.name = newName
-            ItemRepository.shared.updatePrimaryLocation(location)
-            
-            self?.primaryLocations = ItemRepository.shared.getPrimaryLocations()
-            self?.leftTableView.reloadData()
-            
-            // 如果编辑的是当前选中的位置，刷新右侧
-            if self?.selectedPrimaryLocationId == location.id {
-                self?.loadSecondaryLocations()
-            }
+            guard let newName = alert.textFields?.first?.text else { return }
+            self?.viewModel.editPrimaryLocation(at: index, name: newName)
         }
-        
+
         alert.addAction(saveAction)
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))
-        
+
         present(alert, animated: true)
     }
-    
+
     @objc private func editSecondaryLocation(_ sender: UIButton) {
         let index = sender.tag
-        guard index < secondaryLocations.count else { return }
-        let location = secondaryLocations[index]
-        
+        guard index < viewModel.secondaryLocations.count else { return }
+        let location = viewModel.secondaryLocations[index]
+
         let alert = UIAlertController(title: "编辑二级位置", message: nil, preferredStyle: .alert)
         alert.addTextField { textField in
             textField.text = location.name
             textField.placeholder = "位置名称"
         }
-        
+
         let saveAction = UIAlertAction(title: "保存", style: .default) { [weak self] _ in
-            guard let newName = alert.textFields?.first?.text, !newName.isEmpty else { return }
-            
-            location.name = newName
-            ItemRepository.shared.updateSecondaryLocation(location)
-            
-            self?.loadSecondaryLocations()
+            guard let newName = alert.textFields?.first?.text else { return }
+            self?.viewModel.editSecondaryLocation(at: index, name: newName)
         }
-        
+
         alert.addAction(saveAction)
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))
-        
+
         present(alert, animated: true)
     }
-    
+
     @objc private func deletePrimaryLocation(_ sender: UIButton) {
         let index = sender.tag
-        guard index < primaryLocations.count else { return }
-        let location = primaryLocations[index]
-        
-        // 检查是否有物品使用这个位置
-        let itemsInLocation = ItemRepository.shared.getItems(byPrimaryLocationId: location.id)
-        if !itemsInLocation.isEmpty {
-            showAlert(message: "无法删除，有 \(itemsInLocation.count) 个物品使用此位置")
+        guard index < viewModel.primaryLocations.count else { return }
+        let location = viewModel.primaryLocations[index]
+
+        if let reason = viewModel.deletePrimaryBlockedReason(at: index) {
+            showAlert(message: reason)
             return
         }
-        
+
         let alert = UIAlertController(
             title: "删除一级位置",
             message: "确定要删除位置“\(location.name)”吗？\n该位置下的所有二级位置也将被删除。",
             preferredStyle: .alert
         )
-        
+
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))
         alert.addAction(UIAlertAction(title: "删除", style: .destructive) { [weak self] _ in
-            ItemRepository.shared.deletePrimaryLocation(id: location.id)
-            
-            self?.primaryLocations = ItemRepository.shared.getPrimaryLocations()
-            self?.leftTableView.reloadData()
-            
-            // 如果删除的是当前选中的位置，清除选中状态
-            if self?.selectedPrimaryLocationId == location.id {
-                self?.selectedPrimaryLocationId = self?.primaryLocations.first?.id
-                self?.loadSecondaryLocations()
-            }
+            self?.viewModel.deletePrimary(at: index)
         })
-        
+
         present(alert, animated: true)
     }
-    
+
     @objc private func deleteSecondaryLocation(_ sender: UIButton) {
         let index = sender.tag
-        guard index < secondaryLocations.count else { return }
-        let location = secondaryLocations[index]
-        
-        // 检查是否有物品使用这个位置
-        let itemsInLocation = ItemRepository.shared.getItems(bySecondaryLocationId: location.id)
-        if !itemsInLocation.isEmpty {
-            showAlert(message: "无法删除，有 \(itemsInLocation.count) 个物品使用此位置")
+        guard index < viewModel.secondaryLocations.count else { return }
+        let location = viewModel.secondaryLocations[index]
+
+        if let reason = viewModel.deleteSecondaryBlockedReason(at: index) {
+            showAlert(message: reason)
             return
         }
-        
+
         let alert = UIAlertController(
             title: "删除二级位置",
             message: "确定要删除位置“\(location.name)”吗？",
             preferredStyle: .alert
         )
-        
+
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))
         alert.addAction(UIAlertAction(title: "删除", style: .destructive) { [weak self] _ in
-            ItemRepository.shared.deleteSecondaryLocation(id: location.id)
-            self?.loadSecondaryLocations()
+            self?.viewModel.deleteSecondary(at: index)
         })
-        
+
         present(alert, animated: true)
     }
-    
+
     private func showAlert(message: String) {
         let alert = UIAlertController(title: "提示", message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "确定", style: .default))
@@ -442,58 +363,53 @@ class LocationManagementViewController: UIViewController {
 
 // MARK: - UITableViewDelegate & UITableViewDataSource
 extension LocationManagementViewController: UITableViewDelegate, UITableViewDataSource {
-    
+
     func numberOfSections(in tableView: UITableView) -> Int {
         return 1
     }
-    
+
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         if tableView == leftTableView {
-            return primaryLocations.count
+            return viewModel.primaryLocations.count
         } else {
-            return secondaryLocations.count
+            return viewModel.secondaryLocations.count
         }
     }
-    
+
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         if tableView == leftTableView {
             let cell = tableView.dequeueReusableCell(withIdentifier: "PrimaryLocationCell", for: indexPath) as! LocationCell
-            let location = primaryLocations[indexPath.row]
-            cell.configure(with: location, isSelected: location.id == selectedPrimaryLocationId)
-            
-            // 设置编辑和删除按钮
+            let location = viewModel.primaryLocations[indexPath.row]
+            cell.configure(with: location, isSelected: location.id == viewModel.selectedPrimaryLocationId)
+
             cell.editButton.tag = indexPath.row
             cell.editButton.addTarget(self, action: #selector(editPrimaryLocation(_:)), for: .touchUpInside)
             cell.deleteButton.tag = indexPath.row
             cell.deleteButton.addTarget(self, action: #selector(deletePrimaryLocation(_:)), for: .touchUpInside)
-            
+
             return cell
         } else {
             let cell = tableView.dequeueReusableCell(withIdentifier: "SecondaryLocationCell", for: indexPath) as! LocationCell
-            let location = secondaryLocations[indexPath.row]
+            let location = viewModel.secondaryLocations[indexPath.row]
             cell.configure(with: location)
-            
-            // 设置编辑和删除按钮
+
             cell.editButton.tag = indexPath.row
             cell.editButton.addTarget(self, action: #selector(editSecondaryLocation(_:)), for: .touchUpInside)
             cell.deleteButton.tag = indexPath.row
             cell.deleteButton.addTarget(self, action: #selector(deleteSecondaryLocation(_:)), for: .touchUpInside)
-            
+
             return cell
         }
     }
-    
+
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
-        
+
         if tableView == leftTableView {
-            let location = primaryLocations[indexPath.row]
-            selectedPrimaryLocationId = location.id
-            leftTableView.reloadData()
-            loadSecondaryLocations()
+            viewModel.selectPrimary(at: indexPath.row)
         }
     }
-    
+
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return 60
     }

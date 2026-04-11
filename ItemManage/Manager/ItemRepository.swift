@@ -159,26 +159,20 @@ class ItemRepository: ObservableObject {
     }
     
     // MARK: - 一级位置写操作
-    func addPrimaryLocation(_ location: PrimaryLocationModel) {
-        // 添加到本地
-        primaryLocations.append(location)
-        secondaryLocationsByPrimary[location.id] = []
-        
-        // 异步调用 API 保存
-        ItemDataService.shared.createPrimaryLocation(location) { result in
+    /// 仅在网络成功后再写入本地，避免临时 UUID 与服务端 `_id` 不一致
+    func addPrimaryLocation(_ draft: PrimaryLocationModel, completion: @escaping (Result<PrimaryLocationModel, Error>) -> Void) {
+        ItemDataService.shared.createPrimaryLocation(draft) { result in
             DispatchQueue.main.async {
                 switch result {
-                case .success(let savedLocation):
-                    print("✅ API保存一级位置成功: \(savedLocation.name)")
-                    if let idx = self.primaryLocations.firstIndex(where: { $0.id == location.id }) {
-                        self.primaryLocations[idx] = savedLocation
-                    }
+                case .success(let saved):
+                    print("✅ API保存一级位置成功: \(saved.name)")
+                    self.primaryLocations.append(saved)
+                    self.secondaryLocationsByPrimary[saved.id] = []
                     self.buildIndexes()
+                    completion(.success(saved))
                 case .failure(let error):
                     print("❌ API保存一级位置失败: \(error)")
-                    // API失败，回滚本地数据
-                    self.primaryLocations.removeAll { $0.id == location.id }
-                    self.secondaryLocationsByPrimary.removeValue(forKey: location.id)
+                    completion(.failure(error))
                 }
             }
         }
@@ -239,32 +233,26 @@ class ItemRepository: ObservableObject {
     }
     
     // MARK: - 二级位置写操作
-    func addSecondaryLocation(_ location: SecondaryLocationModel) {
-        // 检查一级位置是否存在
-        guard primaryLocations.contains(where: { $0.id == location.primaryLocationId }) else {
+    func addSecondaryLocation(_ draft: SecondaryLocationModel, completion: @escaping (Result<SecondaryLocationModel, Error>) -> Void) {
+        guard primaryLocations.contains(where: { $0.id == draft.primaryLocationId }) else {
+            let err = NSError(domain: "ItemRepository", code: 400, userInfo: [NSLocalizedDescriptionKey: "一级位置不存在"])
             print("❌ 一级位置不存在")
+            DispatchQueue.main.async { completion(.failure(err)) }
             return
         }
         
-        // 添加到本地
-        secondaryLocations.append(location)
-        secondaryLocationsByPrimary[location.primaryLocationId, default: []].append(location)
-        
-        // 异步调用 API 保存
-        ItemDataService.shared.createSecondaryLocation(location) { result in
+        ItemDataService.shared.createSecondaryLocation(draft) { result in
             DispatchQueue.main.async {
                 switch result {
-                case .success(let savedLocation):
-                    print("✅ API保存二级位置成功: \(savedLocation.name)")
-                    if let idx = self.secondaryLocations.firstIndex(where: { $0.id == location.id }) {
-                        self.secondaryLocations[idx] = savedLocation
-                    }
+                case .success(let saved):
+                    print("✅ API保存二级位置成功: \(saved.name)")
+                    self.secondaryLocations.append(saved)
+                    self.secondaryLocationsByPrimary[draft.primaryLocationId, default: []].append(saved)
                     self.buildIndexes()
+                    completion(.success(saved))
                 case .failure(let error):
                     print("❌ API保存二级位置失败: \(error)")
-                    // API失败，回滚本地数据
-                    self.secondaryLocations.removeAll { $0.id == location.id }
-                    self.secondaryLocationsByPrimary[location.primaryLocationId]?.removeAll { $0.id == location.id }
+                    completion(.failure(error))
                 }
             }
         }
