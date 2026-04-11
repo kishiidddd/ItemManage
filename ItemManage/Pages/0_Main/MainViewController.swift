@@ -204,7 +204,7 @@ class MainViewController: UIViewController {
         guard !isSearching else { return }
         isSearching = true
         
-        self.tabBarController?.tabBar.isHidden = true
+        // self.tabBarController?.tabBar.isHidden = true
         
         //清空
         searchView.text = ""

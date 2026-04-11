@@ -142,8 +142,6 @@ class CalculateViewController: UIViewController {
 
     // MARK: - Setup
     private func setupUI() {
-        view.backgroundColor = .systemGroupedBackground
-        title = "统计"
 
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
