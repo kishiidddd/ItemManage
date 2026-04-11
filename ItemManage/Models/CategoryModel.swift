@@ -28,16 +28,4 @@ class CategoryModel: HandyJSON {
         mapper <<<
             self.id <-- "_id"  // 如果服务器返回的是 _id
     }
-    
-    // 提供示例数据用于开发
-    static func example() -> CategoryModel {
-        let category = CategoryModel()
-        category.id = "1"
-        category.name = "食品"
-        category.icon = "🍜"
-        category.color = "#FF6B6B"
-        category.isSystem = true
-        category.itemCount = 5
-        return category
-    }
 }

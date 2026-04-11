@@ -72,8 +72,12 @@ class CreateItemRequest: HandyJSON {
         self.expiryDate = item.expiryDate
         self.remarks = item.remarks
         
-        // 处理照片（这里假设上传后返回URL）
-        self.photos = item.photos.compactMap { $0.url.isEmpty ? nil : $0.url }
+        // 仅提交已上传后的网络地址（由 AddItemViewModel 先调上传接口）
+        self.photos = item.photos.compactMap { photo in
+            let s = photo.remoteURLString.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !s.isEmpty, s.lowercased().hasPrefix("http") else { return nil }
+            return s
+        }
     }
     
     // 验证日期信息是否完整
@@ -242,7 +246,11 @@ class UpdateItemRequest: HandyJSON {
         
         // 处理照片
         if !item.photos.isEmpty {
-            self.photos = item.photos.compactMap { $0.url.isEmpty ? nil : $0.url }
+            self.photos = item.photos.compactMap { photo in
+                let s = photo.remoteURLString.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !s.isEmpty, s.lowercased().hasPrefix("http") else { return nil }
+                return s
+            }
         }
     }
     

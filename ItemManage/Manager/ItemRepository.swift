@@ -322,6 +322,13 @@ class ItemRepository: ObservableObject {
     }
     
     // MARK: - 物品写操作
+
+    /// 接口返回的物品若未带 `photos`（常见），保留本地已选图片，避免详情/列表丢失展示
+    private func mergePhotosIfNeeded(serverItem: ItemModel, localItem: ItemModel) {
+        guard serverItem.photos.isEmpty, !localItem.photos.isEmpty else { return }
+        serverItem.photos = localItem.photos
+    }
+
     func addItem(_ item: ItemModel) {
         // 1. 立即添加到本地（乐观更新）
         allItems.append(item)
@@ -344,6 +351,7 @@ class ItemRepository: ObservableObject {
                 case .success(let savedItem):
                     print("✅ API保存成功: \(savedItem.id)")
                     guard let self = self else { return }
+                    self.mergePhotosIfNeeded(serverItem: savedItem, localItem: item)
                     if let idx = self.allItems.firstIndex(where: { $0.id == item.id }) {
                         self.allItems[idx] = savedItem
                     }
@@ -407,6 +415,7 @@ class ItemRepository: ObservableObject {
                 case .success(let updatedItem):
                     print("✅ API更新成功: \(updatedItem.id)")
                     guard let self = self else { return }
+                    self.mergePhotosIfNeeded(serverItem: updatedItem, localItem: item)
                     if let idx = self.allItems.firstIndex(where: { $0.id == updatedItem.id }) {
                         self.allItems[idx] = updatedItem
                     }

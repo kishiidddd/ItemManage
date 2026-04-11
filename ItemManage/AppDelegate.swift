@@ -53,27 +53,4 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
 }
 
-//
-//// AppDelegate.swift
-//import UIKit
-//
-//@UIApplicationMain
-//class AppDelegate: UIResponder, UIApplicationDelegate {
-//    
-//    var window: UIWindow?
-//    
-//    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-//        
-//        // 创建窗口
-//        window = UIWindow(frame: UIScreen.main.bounds)
-//        
-//        // 创建 TabBarController
-//        let mainTabBarController = MainTabBarController()
-//        
-//        // 设置为根视图控制器
-//        window?.rootViewController = mainTabBarController
-//        window?.makeKeyAndVisible()
-//        
-//        return true
-//    }
-//}
+

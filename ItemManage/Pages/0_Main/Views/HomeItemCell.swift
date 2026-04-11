@@ -6,6 +6,7 @@
 //
 import UIKit
 import SnapKit
+import Kingfisher
 
 // MARK: - HomeItemCell
 class HomeItemCell: UITableViewCell {
@@ -123,9 +124,15 @@ class HomeItemCell: UITableViewCell {
         nameLabel.text = item.name
         quantityLabel.text = "数量：\(item.quantity)"
         
-        // 加载图片
-        if let firstPhoto = item.photos.first, let url = URL(string: firstPhoto.url) {
-            itemImageView.kf.setImage(with: url, placeholder: UIImage(systemName: "photo"))
+        // 加载图片（与详情页一致：优先本地，再 URL）
+        if let first = item.photos.first {
+            if let path = first.localPath, !path.isEmpty, let img = UIImage(contentsOfFile: path) {
+                itemImageView.image = img
+            } else if !first.remoteURLString.isEmpty, let url = URL(string: first.remoteURLString) {
+                itemImageView.kf.setImage(with: url, placeholder: UIImage(systemName: "photo"))
+            } else {
+                itemImageView.image = UIImage(systemName: "photo")
+            }
         } else {
             itemImageView.image = UIImage(systemName: "photo")
         }

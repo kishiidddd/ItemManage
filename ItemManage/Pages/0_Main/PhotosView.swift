@@ -278,10 +278,10 @@ class PhotoCell: UICollectionViewCell {
     func configure(with photo: PhotoModel, index: Int) {
         self.index = index
         
-        if let localPath = photo.localPath {
+        if let localPath = photo.localPath, !localPath.isEmpty {
             imageView.image = UIImage(contentsOfFile: localPath)
-        } else if !photo.url.isEmpty {
-            imageView.kf.setImage(with: URL(string: photo.url), placeholder: UIImage(systemName: "photo"))
+        } else if !photo.remoteURLString.isEmpty, let url = URL(string: photo.remoteURLString) {
+            imageView.kf.setImage(with: url, placeholder: UIImage(systemName: "photo"))
         }
     }
     

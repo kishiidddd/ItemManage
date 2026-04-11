@@ -294,44 +294,6 @@ class ItemModel: HandyJSON {
         
         return true
     }
-    
-    // MARK: - 示例数据
-    
-    static func example() -> ItemModel {
-        let item = ItemModel()
-        item.id = "1"
-        item.name = "苹果"
-        item.categoryId = "1"
-        item.category = CategoryModel.example()
-        item.quantity = 5
-        item.totalPrice = 25.0
-        item.unitId = "1"
-        item.unit = UnitModel.example()
-        
-        // 设置位置
-        item.primaryLocationId = "1"
-        item.primaryLocation = PrimaryLocationModel.example()
-        item.secondaryLocationId = "1"
-        item.secondaryLocation = SecondaryLocationModel.example()
-        
-        // 添加示例照片
-        let photo1 = PhotoModel()
-        photo1.url = "https://example.com/photo1.jpg"
-        photo1.sortOrder = 0
-        
-        let photo2 = PhotoModel()
-        photo2.url = "https://example.com/photo2.jpg"
-        photo2.sortOrder = 1
-        
-        item.photos = [photo1, photo2]
-        
-        // 设置过期日期（7天后）
-        item.expiryDate = Calendar.current.date(byAdding: .day, value: 7, to: Date())
-        
-        item.remarks = "这是示例物品"
-        
-        return item
-    }
 }
 
 // MARK: - 日期验证结果枚举

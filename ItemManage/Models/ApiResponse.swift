@@ -26,22 +26,6 @@ class ItemsListResponse: HandyJSON {
     required init() {}
 }
 
-// 实际返回的JSON数据示例
-//{
-//    "items": [
-//        { "id": "1", "name": "苹果", ... },
-//        { "id": "2", "name": "牛奶", ... },
-//        { "id": "3", "name": "面包", ... }
-//        // ... 共20条数据
-//    ],
-//    "pagination": {
-//        "page": 1,        // 当前第1页
-//        "limit": 20,      // 每页20条
-//        "total": 156,     // 总共156条记录
-//        "pages": 8        // 总共8页
-//    }
-//}
-
 class PaginationModel: HandyJSON {
     var page: Int = 1
     var limit: Int = 20

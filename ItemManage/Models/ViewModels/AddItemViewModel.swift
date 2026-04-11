@@ -155,11 +155,49 @@ class AddItemViewModel: ObservableObject {
         errorMessage = nil
         
         let item = createItemModel()
-        
-        // 模拟保存（实际项目中应该调用 API）
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-            self?.isLoading = false
+        uploadLocalPhotosThenFinish(item: item, completion: completion)
+    }
+
+    /// 本地图先上传拿 URL，再交给上层（请求里只带 http URL）
+    private func uploadLocalPhotosThenFinish(item: ItemModel, completion: @escaping (Result<ItemModel, Error>) -> Void) {
+        let originals = item.photos
+        guard !originals.isEmpty else {
+            isLoading = false
             completion(.success(item))
+            return
+        }
+        Task { @MainActor in
+            defer { isLoading = false }
+            var out: [PhotoModel] = []
+            do {
+                for p in originals {
+                    let r = p.remoteURLString.trimmingCharacters(in: .whitespacesAndNewlines)
+                    if r.lowercased().hasPrefix("http://") || r.lowercased().hasPrefix("https://") {
+                        let c = PhotoModel()
+                        c.url = p.url.isEmpty ? r : p.url
+                        c.imageUrl = p.imageUrl
+                        c.filename = p.filename
+                        c.sortOrder = p.sortOrder
+                        c.uploadedAt = p.uploadedAt
+                        out.append(c)
+                        continue
+                    }
+                    if let path = p.localPath, !path.isEmpty, FileManager.default.fileExists(atPath: path) {
+                        let urlStr = try await ItemPhotoUploadService.upload(fileURL: URL(fileURLWithPath: path))
+                        let np = PhotoModel()
+                        np.url = urlStr
+                        np.sortOrder = p.sortOrder
+                        np.filename = p.filename
+                        np.uploadedAt = Date()
+                        out.append(np)
+                    }
+                }
+                item.photos = out
+                completion(.success(item))
+            } catch {
+                errorMessage = error.localizedDescription
+                completion(.failure(error))
+            }
         }
     }
     
@@ -341,29 +379,4 @@ class AddItemViewModel: ObservableObject {
     }
 }
 
-// MARK: - Extension for Mock Data
-extension AddItemViewModel {
-    // 添加一些示例数据，方便测试
-    static func mockViewModel() -> AddItemViewModel {
-        let viewModel = AddItemViewModel()
-        viewModel.name = "测试物品"
-        viewModel.selectedCategory = CategoryModel.example()
-        viewModel.selectedPrimaryLocation = PrimaryLocationModel.example()
-        viewModel.selectedSecondaryLocation = SecondaryLocationModel.example()
-        viewModel.quantity = 3
-        viewModel.totalPrice = "29.99"
-        viewModel.selectedUnit = UnitModel.example()
-        viewModel.remarks = "这是一个测试物品"
-        viewModel.productionDate = Date()
-        viewModel.shelfLife = 30
-        viewModel.calculateExpiryDate()
-        return viewModel
-    }
-    
-    func calculateExpiryDate() {
-        if let productionDate = productionDate, let shelfLife = shelfLife {
-            expiryDate = Calendar.current.date(byAdding: .day, value: shelfLife, to: productionDate)
-        }
-    }
-}
 

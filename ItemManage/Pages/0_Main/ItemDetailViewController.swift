@@ -64,7 +64,26 @@ class ItemDetailPopupViewController: UIViewController {
         view.backgroundColor = UIColor(white: 0.92, alpha: 1)
         return view
     }()
-    
+
+    /// 详情页展示物品照片（与列表/编辑页一致：优先本地路径，其次网络 URL）
+    private lazy var photosScrollView: UIScrollView = {
+        let sv = UIScrollView()
+        sv.showsHorizontalScrollIndicator = true
+        sv.alwaysBounceHorizontal = true
+        sv.clipsToBounds = true
+        return sv
+    }()
+
+    private let photosStackView: UIStackView = {
+        let s = UIStackView()
+        s.axis = .horizontal
+        s.spacing = 12
+        s.alignment = .center
+        return s
+    }()
+
+    private var photosHeightConstraint: Constraint?
+
     // MARK: - 信息行容器
     private lazy var infoContainer: UIStackView = {
         let stack = UIStackView()
@@ -189,11 +208,23 @@ class ItemDetailPopupViewController: UIViewController {
             make.left.right.equalToSuperview().inset(16)
             make.height.equalTo(0.5)
         }
+
+        cardContentView.addSubview(photosScrollView)
+        photosScrollView.addSubview(photosStackView)
+        photosStackView.snp.makeConstraints { make in
+            make.edges.equalToSuperview()
+            make.height.equalTo(photosScrollView.snp.height)
+        }
+        photosScrollView.snp.makeConstraints { make in
+            make.top.equalTo(dividerLine.snp.bottom).offset(16)
+            make.left.right.equalToSuperview().inset(16)
+            photosHeightConstraint = make.height.equalTo(0).constraint
+        }
         
         // 信息容器
         cardContentView.addSubview(infoContainer)
         infoContainer.snp.makeConstraints { make in
-            make.top.equalTo(dividerLine.snp.bottom).offset(16)
+            make.top.equalTo(photosScrollView.snp.bottom).offset(16)
             make.left.right.equalToSuperview().inset(16)
         }
         
@@ -233,10 +264,14 @@ class ItemDetailPopupViewController: UIViewController {
     
     // MARK: - Configure
     private func configureWithItem() {
-        nameLabel.text = item.name
+        // 使用仓库中的最新数据（含合并后的 photos），避免弹窗持有旧引用导致图片为空
+        let model = repository.getItem(byId: item.id) ?? item
+
+        nameLabel.text = model.name
+        configurePhotos(from: model)
         
         // 分类
-        if let category = item.category {
+        if let category = model.category {
             categoryLabel.text = " \(category.icon) \(category.name) "
             let color = UIColor(hex: category.color)
             categoryLabel.backgroundColor = color
@@ -247,15 +282,15 @@ class ItemDetailPopupViewController: UIViewController {
         }
         
         // 数量
-        addInfoRow(icon: "number", title: "数量", value: "\(item.quantity)")
+        addInfoRow(icon: "number", title: "数量", value: "\(model.quantity)")
         
         // 单位
-        if let unit = item.unit {
+        if let unit = model.unit {
             addInfoRow(icon: "ruler", title: "单位", value: unit.name)
         }
         
         // 价格
-        if let totalPrice = item.totalPrice {
+        if let totalPrice = model.totalPrice {
             addInfoRow(icon: "yensign.circle", title: "价格", value: String(format: "¥%.2f", totalPrice))
         }
         
@@ -266,7 +301,7 @@ class ItemDetailPopupViewController: UIViewController {
         configureTimeInfo()
         
         // 备注
-        if let remarks = item.remarks, !remarks.isEmpty {
+        if let remarks = model.remarks, !remarks.isEmpty {
             addInfoRow(icon: "note.text", title: "备注", value: remarks)
         }
         
@@ -283,6 +318,58 @@ class ItemDetailPopupViewController: UIViewController {
         view.layoutIfNeeded()
         updateCardHeight()
     }
+
+    private func configurePhotos(from model: ItemModel) {
+        photosStackView.arrangedSubviews.forEach {
+            photosStackView.removeArrangedSubview($0)
+            $0.removeFromSuperview()
+        }
+
+        guard !model.photos.isEmpty else {
+            photosHeightConstraint?.update(offset: 0)
+            photosScrollView.isHidden = true
+            return
+        }
+
+        photosScrollView.isHidden = false
+        photosHeightConstraint?.update(offset: 112)
+
+        for photo in model.photos {
+            let iv = UIImageView()
+            iv.contentMode = .scaleAspectFill
+            iv.clipsToBounds = true
+            iv.layer.cornerRadius = 8
+            iv.backgroundColor = .systemGray6
+            iv.snp.makeConstraints { make in
+                make.width.height.equalTo(100)
+            }
+
+            if let localPath = photo.localPath, !localPath.isEmpty, let img = UIImage(contentsOfFile: localPath) {
+                iv.image = img
+            } else {
+                let raw = photo.remoteURLString.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !raw.isEmpty, let url = ItemDetailPopupViewController.resolvedPhotoURL(from: raw) {
+                    iv.kf.setImage(with: url, placeholder: UIImage(systemName: "photo"))
+                } else {
+                    iv.image = UIImage(systemName: "photo")
+                    iv.tintColor = .systemGray3
+                    iv.contentMode = .scaleAspectFit
+                }
+            }
+
+            photosStackView.addArrangedSubview(iv)
+        }
+    }
+
+    /// 支持 `http(s)://` 绝对地址。若为以 `/` 开头的相对路径，需后端返回完整 URL，或与 `ItemAPIClient` 共用同一套 base 后再拼接。
+    private static func resolvedPhotoURL(from string: String) -> URL? {
+        let trimmed = string.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        if let u = URL(string: trimmed), u.scheme != nil {
+            return u
+        }
+        return URL(string: trimmed)
+    }
     
     private func addInfoRow(icon: String, title: String, value: String) {
         let row = InfoRow(icon: icon, title: title)
@@ -291,15 +378,16 @@ class ItemDetailPopupViewController: UIViewController {
     }
     
     private func configureLocationInfo() {
+        let model = repository.getItem(byId: item.id) ?? item
         var locationPath: [String] = []
         
         // 添加一级位置
-        if let primaryLocation = item.primaryLocation {
+        if let primaryLocation = model.primaryLocation {
             locationPath.append(primaryLocation.name)
         }
         
         // 添加二级位置
-        if let secondaryLocation = item.secondaryLocation {
+        if let secondaryLocation = model.secondaryLocation {
             locationPath.append(secondaryLocation.name)
         }
         
@@ -309,18 +397,19 @@ class ItemDetailPopupViewController: UIViewController {
     }
     
     private func configureTimeInfo() {
+        let model = repository.getItem(byId: item.id) ?? item
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy年MM月dd日"
         
-        if let productionDate = item.productionDate {
+        if let productionDate = model.productionDate {
             addInfoRow(icon: "calendar", title: "生产日期", value: formatter.string(from: productionDate))
         }
         
-        if let shelfLife = item.shelfLife {
+        if let shelfLife = model.shelfLife {
             addInfoRow(icon: "timer", title: "保质期", value: "\(shelfLife)天")
         }
         
-        if let expiryDate = item.expiryDate {
+        if let expiryDate = model.expiryDate {
             addInfoRow(icon: "exclamationmark.triangle", title: "过期日期", value: formatter.string(from: expiryDate))
             
             let daysUntilExpire = Calendar.current.dateComponents([.day], from: Date(), to: expiryDate).day ?? 0
