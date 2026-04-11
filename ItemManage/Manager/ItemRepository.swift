@@ -28,10 +28,13 @@ class ItemRepository: ObservableObject {
     private var secondaryLocationsByPrimary: [String: [SecondaryLocationModel]] = [:]
     
     // MARK: - 数据加载
-    func loadData() {
+    func loadData(completion: (() -> Void)? = nil) {
         ItemDataService.shared.loadFullSnapshot { [weak self] result in
             DispatchQueue.main.async {
-                guard let self = self else { return }
+                guard let self = self else {
+                    completion?()
+                    return
+                }
                 switch result {
                 case .success(let snapshot):
                     self.allItems = snapshot.items
@@ -42,6 +45,35 @@ class ItemRepository: ObservableObject {
                     self.buildIndexes()
                 case .failure(let error):
                     print("❌ ItemRepository loadData: \(error.localizedDescription)")
+                }
+                completion?()
+            }
+        }
+    }
+    
+    /// 新建分类（写入服务端并刷新全量缓存）
+    func createCategory(name: String, completion: @escaping (Result<Void, Error>) -> Void) {
+        ItemDataService.shared.createCategory(name: name) { [weak self] result in
+            switch result {
+            case .failure(let e):
+                DispatchQueue.main.async { completion(.failure(e)) }
+            case .success:
+                self?.loadData {
+                    DispatchQueue.main.async { completion(.success(())) }
+                }
+            }
+        }
+    }
+    
+    /// 新建单位（写入服务端并刷新全量缓存）
+    func createUnit(name: String, completion: @escaping (Result<Void, Error>) -> Void) {
+        ItemDataService.shared.createUnit(name: name) { [weak self] result in
+            switch result {
+            case .failure(let e):
+                DispatchQueue.main.async { completion(.failure(e)) }
+            case .success:
+                self?.loadData {
+                    DispatchQueue.main.async { completion(.success(())) }
                 }
             }
         }

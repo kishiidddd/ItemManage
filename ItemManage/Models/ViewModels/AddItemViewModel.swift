@@ -85,6 +85,13 @@ class AddItemViewModel: ObservableObject {
         // 数据已经在 init 中加载
     }
     
+    /// 从全局仓库同步分类/单位/位置（从规则设置返回或切回添加页时调用）
+    func reloadPickersFromRepository() {
+        categories = repository.categories
+        units = repository.units
+        primaryLocations = repository.primaryLocations
+    }
+    
     func setShelfLife(_ days: Int?) {
         shelfLife = days
         if let days = days, let productionDate = productionDate {

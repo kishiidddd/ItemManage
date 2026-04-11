@@ -215,6 +215,12 @@ class AddItemViewController: UIViewController {
         NotificationCenter.default.removeObserver(self)
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        viewModel.reloadPickersFromRepository()
+        updateUI()
+    }
+    
     // MARK: - Setup UI
     private func setupUI() {
         view.backgroundColor = .systemGroupedBackground

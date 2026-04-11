@@ -205,6 +205,51 @@ class ItemDataService {
         }
     }
     
+    func createCategory(name: String, completion: @escaping (Result<CategoryModel, Error>) -> Void) {
+        let body: [String: Any] = [
+            "name": name,
+            "icon": "📦",
+            "color": "#4CAF50",
+            "sortOrder": 0
+        ]
+        ItemAPIClient.shared.perform(path: "categories", method: "POST", jsonBody: body) { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .failure(let e): completion(.failure(e))
+                case .success(let json):
+                    guard let dict = json as? [String: Any], let data = dict["data"],
+                          let model = ItemJSONMapper.object(CategoryModel.self, from: data) else {
+                        completion(.failure(ItemAPIError.decodeFailed))
+                        return
+                    }
+                    completion(.success(model))
+                }
+            }
+        }
+    }
+    
+    func createUnit(name: String, completion: @escaping (Result<UnitModel, Error>) -> Void) {
+        let body: [String: Any] = [
+            "name": name,
+            "abbreviation": name,
+            "sortOrder": 0
+        ]
+        ItemAPIClient.shared.perform(path: "units", method: "POST", jsonBody: body) { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .failure(let e): completion(.failure(e))
+                case .success(let json):
+                    guard let dict = json as? [String: Any], let data = dict["data"],
+                          let model = ItemJSONMapper.object(UnitModel.self, from: data) else {
+                        completion(.failure(ItemAPIError.decodeFailed))
+                        return
+                    }
+                    completion(.success(model))
+                }
+            }
+        }
+    }
+    
     // MARK: - 位置管理
     func getPrimaryLocations(completion: @escaping ([PrimaryLocationModel]) -> Void) {
         fetchPrimaryLocations { result in

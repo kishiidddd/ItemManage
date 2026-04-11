@@ -292,6 +292,12 @@ class ItemRulesViewController: UIViewController {
         }
     }
     
+    private func showRulesError(_ message: String) {
+        let alert = UIAlertController(title: "保存失败", message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "确定", style: .default))
+        present(alert, animated: true)
+    }
+    
     private func loadData() {
         // 加载单位（放在前面）
         ItemDataService.shared.getUnits { [weak self] units in
@@ -313,18 +319,18 @@ class ItemRulesViewController: UIViewController {
         }
         
         let addAction = UIAlertAction(title: "添加", style: .default) { [weak self] _ in
-            guard let name = alert.textFields?.first?.text, !name.isEmpty else { return }
+            guard let name = alert.textFields?.first?.text?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty else { return }
             
-            let newUnit = UnitModel()
-            newUnit.id = UUID().uuidString
-            newUnit.name = name
-            newUnit.abbreviation = name
-            
-            // 这里应该调用数据服务保存
-            // ItemDataService.shared.addUnit(newUnit)
-            
-            self?.units.append(newUnit)
-            self?.tableView.reloadSections(IndexSet(integer: 1), with: .automatic) // 单位现在在第1个section
+            ItemRepository.shared.createUnit(name: name) { result in
+                guard let self = self else { return }
+                switch result {
+                case .success:
+                    self.units = ItemRepository.shared.units
+                    self.tableView.reloadSections(IndexSet(integer: 1), with: .automatic)
+                case .failure(let error):
+                    self.showRulesError(error.localizedDescription)
+                }
+            }
         }
         
         alert.addAction(addAction)
@@ -340,17 +346,18 @@ class ItemRulesViewController: UIViewController {
         }
         
         let addAction = UIAlertAction(title: "添加", style: .default) { [weak self] _ in
-            guard let name = alert.textFields?.first?.text, !name.isEmpty else { return }
+            guard let name = alert.textFields?.first?.text?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty else { return }
             
-            let newCategory = CategoryModel()
-            newCategory.id = UUID().uuidString
-            newCategory.name = name
-            
-            // 这里应该调用数据服务保存
-            // ItemDataService.shared.addCategory(newCategory)
-            
-            self?.categories.append(newCategory)
-            self?.tableView.reloadSections(IndexSet(integer: 2), with: .automatic) // 分类现在在第2个section
+            ItemRepository.shared.createCategory(name: name) { result in
+                guard let self = self else { return }
+                switch result {
+                case .success:
+                    self.categories = ItemRepository.shared.categories
+                    self.tableView.reloadSections(IndexSet(integer: 2), with: .automatic)
+                case .failure(let error):
+                    self.showRulesError(error.localizedDescription)
+                }
+            }
         }
         
         alert.addAction(addAction)
