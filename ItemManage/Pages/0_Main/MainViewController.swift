@@ -63,6 +63,9 @@ class MainViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        messageScrollView.onGuideSpotlightTapped = { [weak self] in
+            self?.openStorageGuideTab()
+        }
         setupUI()
         setupConstraints()
         setupTapBack()
@@ -70,6 +73,39 @@ class MainViewController: UIViewController {
         setupSearchAction()
         setupTableViewBackground()
         setupNotifications()
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        refreshHomeGuideSpotlightFromServer()
+    }
+
+    /// 拉取指南列表并刷新首页主推卡片文案（失败时仍用本地兜底 `displayItems`）
+    private func refreshHomeGuideSpotlightFromServer() {
+        StorageGuideAPI.fetchTips { [weak self] result in
+            DispatchQueue.main.async {
+                if case .success(let items) = result {
+                    StorageGuideRuntimeData.applyServerItems(items)
+                }
+                self?.messageScrollView.updateGuideSpotlight()
+            }
+        }
+    }
+
+    /// 切换到含 `StorageGuideViewController` 的 Tab（若未嵌入 TabBar 则无效果）
+    private func openStorageGuideTab() {
+        guard let tab = tabBarController,
+              let vcs = tab.viewControllers,
+              let idx = vcs.firstIndex(where: { vc in
+                  if let nav = vc as? UINavigationController {
+                      return nav.viewControllers.contains { $0 is StorageGuideViewController }
+                  }
+                  return vc is StorageGuideViewController
+              }) else { return }
+        tab.selectedIndex = idx
+        if let nav = vcs[idx] as? UINavigationController {
+            nav.popToRootViewController(animated: false)
+        }
     }
     
     private func setupNotifications(){

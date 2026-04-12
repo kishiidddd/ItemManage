@@ -8,24 +8,21 @@ import SnapKit
 
 final class StorageGuideViewController: UIViewController {
 
-    private let scrollView: UIScrollView = {
-        let sv = UIScrollView()
-        sv.alwaysBounceVertical = true
-        sv.showsVerticalScrollIndicator = true
-        return sv
+    private let tableView: UITableView = {
+        let t = UITableView(frame: .zero, style: .insetGrouped)
+        t.separatorStyle = .none
+        t.backgroundColor = .systemGroupedBackground
+        t.rowHeight = UITableView.automaticDimension
+        t.estimatedRowHeight = 160
+        return t
     }()
 
-    private let contentStack: UIStackView = {
-        let s = UIStackView()
-        s.axis = .vertical
-        s.spacing = 16
-        s.alignment = .fill
-        return s
-    }()
-
-    /// 与 `starButtons` 下标一致，用于刷新星标状态
     private var displayedItems: [StorageGuideItem] = []
-    private var starButtons: [Int: UIButton] = [:]
+    /// 主推在 `displayedItems` 中的下标
+    private var spotlightIndex: Int = 0
+    /// 除主推外的原始下标顺序
+    private var otherIndices: [Int] = []
+    private var selectedOriginalIndex: Int?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -33,41 +30,18 @@ final class StorageGuideViewController: UIViewController {
         navigationItem.largeTitleDisplayMode = .never
         view.backgroundColor = .systemGroupedBackground
 
-        view.addSubview(scrollView)
-        scrollView.addSubview(contentStack)
+        tableView.dataSource = self
+        tableView.delegate = self
+        tableView.register(StorageGuideHeroTableCell.self, forCellReuseIdentifier: StorageGuideHeroTableCell.reuseId)
+        tableView.register(StorageGuideTipTableCell.self, forCellReuseIdentifier: StorageGuideTipTableCell.reuseId)
 
-        scrollView.snp.makeConstraints { make in
+        view.addSubview(tableView)
+        tableView.snp.makeConstraints { make in
             make.edges.equalTo(view.safeAreaLayoutGuide)
         }
-        contentStack.snp.makeConstraints { make in
-            make.top.equalToSuperview().offset(12)
-            make.left.equalToSuperview().offset(20)
-            make.right.equalToSuperview().offset(-20)
-            make.bottom.equalToSuperview().offset(-24)
-            make.width.equalTo(scrollView.snp.width).offset(-40)
-        }
 
-        let headerRow = UIStackView()
-        headerRow.axis = .horizontal
-        headerRow.alignment = .center
-        headerRow.distribution = .fill
-        let headerSpacer = UIView()
-        let favEntry = UIButton(type: .system)
-        favEntry.setImage(UIImage(systemName: "star.square.on.square"), for: .normal)
-        favEntry.tintColor = .label
-        favEntry.setPreferredSymbolConfiguration(
-            UIImage.SymbolConfiguration(pointSize: 22, weight: .medium),
-            forImageIn: .normal
-        )
-        favEntry.addTarget(self, action: #selector(openFavorites), for: .touchUpInside)
-        favEntry.snp.makeConstraints { make in
-            make.width.height.equalTo(44)
-        }
-        headerRow.addArrangedSubview(headerSpacer)
-        headerRow.addArrangedSubview(favEntry)
-        contentStack.addArrangedSubview(headerRow)
-
-        reloadTipCards(with: StorageGuideRuntimeData.displayItems)
+        setupTableHeader()
+        applyItems(StorageGuideRuntimeData.displayItems)
 
         NotificationCenter.default.addObserver(
             self,
@@ -77,23 +51,51 @@ final class StorageGuideViewController: UIViewController {
         )
     }
 
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        guard let header = tableView.tableHeaderView else { return }
+        let w = tableView.bounds.width
+        if w > 0, header.frame.width != w {
+            header.frame = CGRect(x: 0, y: 0, width: w, height: 52)
+            tableView.tableHeaderView = header
+        }
+    }
+
+    private func setupTableHeader() {
+        let header = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 52))
+        let btn = UIButton(type: .system)
+        btn.setImage(UIImage(systemName: "star.square.on.square"), for: .normal)
+        btn.tintColor = .label
+        btn.setPreferredSymbolConfiguration(
+            UIImage.SymbolConfiguration(pointSize: 22, weight: .medium),
+            forImageIn: .normal
+        )
+        btn.addTarget(self, action: #selector(openFavorites), for: .touchUpInside)
+        header.addSubview(btn)
+        btn.snp.makeConstraints { make in
+            make.centerY.equalToSuperview()
+            make.right.equalToSuperview().offset(-20)
+            make.width.height.equalTo(44)
+        }
+        tableView.tableHeaderView = header
+    }
+
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         navigationController?.setNavigationBarHidden(true, animated: animated)
         loadTipsFromNetwork()
     }
 
-    private func reloadTipCards(with items: [StorageGuideItem]) {
-        while contentStack.arrangedSubviews.count > 1 {
-            let v = contentStack.arrangedSubviews.last!
-            contentStack.removeArrangedSubview(v)
-            v.removeFromSuperview()
-        }
-        starButtons.removeAll()
+    private func applyItems(_ items: [StorageGuideItem]) {
         displayedItems = items
-        for (index, item) in items.enumerated() {
-            contentStack.addArrangedSubview(guideCard(item: item, index: index))
+        selectedOriginalIndex = nil
+        if items.isEmpty {
+            otherIndices = []
+        } else {
+            spotlightIndex = items.firstIndex { $0.showInMain } ?? 0
+            otherIndices = items.indices.filter { $0 != spotlightIndex }
         }
+        tableView.reloadData()
     }
 
     private func loadTipsFromNetwork() {
@@ -103,13 +105,18 @@ final class StorageGuideViewController: UIViewController {
                 switch result {
                 case .success(let items):
                     StorageGuideRuntimeData.applyServerItems(items)
-                    self.reloadTipCards(with: items)
+                    self.applyItems(items)
                     self.favoritesDidChange()
                 case .failure:
                     break
                 }
             }
         }
+    }
+
+    private func originalIndex(for indexPath: IndexPath) -> Int {
+        if indexPath.row == 0 { return spotlightIndex }
+        return otherIndices[indexPath.row - 1]
     }
 
     deinit {
@@ -122,26 +129,25 @@ final class StorageGuideViewController: UIViewController {
     }
 
     @objc private func favoritesDidChange() {
-        let store = StorageGuideFavoritesStore.shared
-        for idx in 0..<displayedItems.count {
-            let item = displayedItems[idx]
-            guard let button = starButtons[idx] else { continue }
-            updateStarButton(button, favorited: store.isFavorite(title: item.title, body: item.body))
-        }
+        tableView.reloadData()
     }
 
-    private func toggleFavorite(at index: Int) {
-        guard index >= 0, index < displayedItems.count else { return }
-        let item = displayedItems[index]
+    @objc private func starTapped(_ sender: UIButton) {
+        toggleFavorite(at: sender.tag)
+    }
+
+    private func toggleFavorite(at originalIndex: Int) {
+        guard originalIndex >= 0, originalIndex < displayedItems.count else { return }
+        let item = displayedItems[originalIndex]
         let store = StorageGuideFavoritesStore.shared
         if store.isFavorite(title: item.title, body: item.body) {
             store.remove(title: item.title, body: item.body)
-            if let b = starButtons[index] { updateStarButton(b, favorited: false) }
+            tableView.reloadData()
             return
         }
         switch store.add(title: item.title, body: item.body) {
         case .success:
-            if let b = starButtons[index] { updateStarButton(b, favorited: true) }
+            tableView.reloadData()
         case .failure:
             let alert = UIAlertController(
                 title: "已达收藏上限",
@@ -152,64 +158,216 @@ final class StorageGuideViewController: UIViewController {
             present(alert, animated: true)
         }
     }
+}
 
-    private func updateStarButton(_ button: UIButton, favorited: Bool) {
-        let name = favorited ? "star.fill" : "star"
-        button.setImage(UIImage(systemName: name), for: .normal)
+// MARK: - UITableView
+
+extension StorageGuideViewController: UITableViewDataSource, UITableViewDelegate {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        displayedItems.isEmpty ? 0 : 1 + otherIndices.count
     }
 
-    private func guideCard(item: StorageGuideItem, index: Int) -> UIView {
-        let card = UIView()
-        card.backgroundColor = .secondarySystemGroupedBackground
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let orig = originalIndex(for: indexPath)
+        let item = displayedItems[orig]
+        let selected = selectedOriginalIndex == orig
+        let favorited = StorageGuideFavoritesStore.shared.isFavorite(title: item.title, body: item.body)
+
+        if indexPath.row == 0 {
+            let cell = tableView.dequeueReusableCell(withIdentifier: StorageGuideHeroTableCell.reuseId, for: indexPath) as! StorageGuideHeroTableCell
+            cell.configure(
+                item: item,
+                originalIndex: orig,
+                selected: selected,
+                favorited: favorited,
+                starTarget: self,
+                starAction: #selector(starTapped(_:))
+            )
+            return cell
+        }
+        let cell = tableView.dequeueReusableCell(withIdentifier: StorageGuideTipTableCell.reuseId, for: indexPath) as! StorageGuideTipTableCell
+        cell.configure(
+            item: item,
+            originalIndex: orig,
+            selected: selected,
+            favorited: favorited,
+            starTarget: self,
+            starAction: #selector(starTapped(_:))
+        )
+        return cell
+    }
+
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: false)
+        selectedOriginalIndex = originalIndex(for: indexPath)
+        tableView.reloadData()
+    }
+}
+
+// MARK: - Cells
+
+private final class StorageGuideHeroTableCell: UITableViewCell {
+    static let reuseId = "StorageGuideHeroTableCell"
+
+    private let card = UIView()
+    private let titleLabel = UILabel()
+    private let bodyLabel = UILabel()
+    private let starButton = UIButton(type: .system)
+
+    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
+        super.init(style: style, reuseIdentifier: reuseIdentifier)
+        selectionStyle = .none
+        backgroundColor = .clear
+        contentView.backgroundColor = .clear
+
+        card.layer.cornerRadius = 16
+        card.backgroundColor = .systemBlue
+
+        titleLabel.font = .systemFont(ofSize: 22, weight: .bold)
+        titleLabel.textColor = .white
+        titleLabel.textAlignment = .center
+        titleLabel.numberOfLines = 0
+
+        bodyLabel.font = .systemFont(ofSize: 16)
+        bodyLabel.textColor = UIColor.white.withAlphaComponent(0.9)
+        bodyLabel.textAlignment = .center
+        bodyLabel.numberOfLines = 0
+
+        starButton.tintColor = .systemYellow
+        starButton.setPreferredSymbolConfiguration(
+            UIImage.SymbolConfiguration(pointSize: 22, weight: .medium),
+            forImageIn: .normal
+        )
+
+        contentView.addSubview(card)
+        card.addSubview(titleLabel)
+        card.addSubview(bodyLabel)
+        card.addSubview(starButton)
+
+        card.snp.makeConstraints { make in
+            make.top.equalToSuperview().offset(4)
+            make.left.equalToSuperview().offset(4)
+            make.right.equalToSuperview().offset(-4)
+            make.bottom.equalToSuperview().offset(-12)
+        }
+        starButton.snp.makeConstraints { make in
+            make.top.equalTo(card).offset(18)
+            make.right.equalTo(card).offset(-12)
+            make.width.height.equalTo(40)
+        }
+        titleLabel.snp.makeConstraints { make in
+            make.centerY.equalTo(starButton)
+            make.left.equalTo(card).offset(36)
+            make.right.equalTo(starButton.snp.left).offset(-4)
+        }
+        bodyLabel.snp.makeConstraints { make in
+            make.top.equalTo(titleLabel.snp.bottom).offset(28)
+            make.left.equalTo(card).offset(18)
+            make.right.equalTo(card).offset(-18)
+            make.bottom.equalTo(card).offset(-22)
+        }
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    func configure(
+        item: StorageGuideItem,
+        originalIndex: Int,
+        selected: Bool,
+        favorited: Bool,
+        starTarget: Any?,
+        starAction: Selector
+    ) {
+        titleLabel.text = item.title
+        bodyLabel.text = item.body
+        starButton.tag = originalIndex
+        starButton.removeTarget(nil, action: nil, for: .touchUpInside)
+        starButton.addTarget(starTarget, action: starAction, for: .touchUpInside)
+        let starName = favorited ? "star.fill" : "star"
+        starButton.setImage(UIImage(systemName: starName), for: .normal)
+        card.layer.borderWidth = selected ? 2 : 0
+        card.layer.borderColor = selected ? UIColor.white.cgColor : nil
+    }
+}
+
+private final class StorageGuideTipTableCell: UITableViewCell {
+    static let reuseId = "StorageGuideTipTableCell"
+
+    private let card = UIView()
+    private let titleLabel = UILabel()
+    private let bodyLabel = UILabel()
+    private let starButton = UIButton(type: .system)
+
+    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
+        super.init(style: style, reuseIdentifier: reuseIdentifier)
+        selectionStyle = .none
+        backgroundColor = .clear
+        contentView.backgroundColor = .clear
+
         card.layer.cornerRadius = 12
+        card.backgroundColor = .secondarySystemGroupedBackground
 
-        let tl = UILabel()
-        tl.text = item.title
-        tl.font = .systemFont(ofSize: 17, weight: .semibold)
-        tl.textColor = .label
-        tl.numberOfLines = 0
+        titleLabel.font = .systemFont(ofSize: 17, weight: .semibold)
+        titleLabel.textColor = .label
+        titleLabel.numberOfLines = 0
 
-        let bl = UILabel()
-        bl.text = item.body
-        bl.font = .systemFont(ofSize: 15)
-        bl.textColor = .secondaryLabel
-        bl.numberOfLines = 0
+        bodyLabel.font = .systemFont(ofSize: 15)
+        bodyLabel.textColor = .secondaryLabel
+        bodyLabel.numberOfLines = 0
 
-        let starButton = UIButton(type: .system)
         starButton.tintColor = .systemYellow
         starButton.setPreferredSymbolConfiguration(
             UIImage.SymbolConfiguration(pointSize: 18, weight: .medium),
             forImageIn: .normal
         )
-        let idx = index
-        starButton.addAction(UIAction { [weak self] _ in
-            self?.toggleFavorite(at: idx)
-        }, for: .touchUpInside)
 
-        starButtons[index] = starButton
-        updateStarButton(starButton, favorited: StorageGuideFavoritesStore.shared.isFavorite(title: item.title, body: item.body))
-
-        card.addSubview(tl)
-        card.addSubview(bl)
+        contentView.addSubview(card)
+        card.addSubview(titleLabel)
+        card.addSubview(bodyLabel)
         card.addSubview(starButton)
 
+        card.snp.makeConstraints { make in
+            make.top.equalToSuperview().offset(4)
+            make.left.equalToSuperview().offset(4)
+            make.right.equalToSuperview().offset(-4)
+            make.bottom.equalToSuperview().offset(-12)
+        }
         starButton.snp.makeConstraints { make in
-            make.top.equalToSuperview().offset(12)
-            make.right.equalToSuperview().offset(-12)
+            make.top.equalTo(card).offset(12)
+            make.right.equalTo(card).offset(-12)
             make.width.height.equalTo(36)
         }
-        tl.snp.makeConstraints { make in
-            make.top.equalToSuperview().offset(16)
-            make.left.equalToSuperview().offset(16)
+        titleLabel.snp.makeConstraints { make in
+            make.top.equalTo(card).offset(16)
+            make.left.equalTo(card).offset(16)
             make.right.lessThanOrEqualTo(starButton.snp.left).offset(-8)
         }
-        bl.snp.makeConstraints { make in
-            make.top.equalTo(tl.snp.bottom).offset(8)
-            make.left.equalToSuperview().offset(16)
-            make.right.equalToSuperview().offset(-16)
-            make.bottom.equalToSuperview().offset(-16)
+        bodyLabel.snp.makeConstraints { make in
+            make.top.equalTo(titleLabel.snp.bottom).offset(8)
+            make.left.equalTo(card).offset(16)
+            make.right.equalTo(card).offset(-16)
+            make.bottom.equalTo(card).offset(-16)
         }
+    }
 
-        return card
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    func configure(
+        item: StorageGuideItem,
+        originalIndex: Int,
+        selected: Bool,
+        favorited: Bool,
+        starTarget: Any?,
+        starAction: Selector
+    ) {
+        titleLabel.text = item.title
+        bodyLabel.text = item.body
+        starButton.tag = originalIndex
+        starButton.removeTarget(nil, action: nil, for: .touchUpInside)
+        starButton.addTarget(starTarget, action: starAction, for: .touchUpInside)
+        let starName = favorited ? "star.fill" : "star"
+        starButton.setImage(UIImage(systemName: starName), for: .normal)
+        card.layer.borderWidth = selected ? 2 : 0
+        card.layer.borderColor = selected ? UIColor.systemBlue.cgColor : nil
     }
 }

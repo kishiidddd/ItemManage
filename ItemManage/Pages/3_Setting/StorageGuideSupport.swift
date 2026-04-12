@@ -8,6 +8,20 @@ import Foundation
 struct StorageGuideItem: Codable, Equatable {
     let title: String
     let body: String
+    /// 首页 / 指南页顶部主推；未返回该字段时视为 false
+    let showInMain: Bool
+
+    init(title: String, body: String, showInMain: Bool = false) {
+        self.title = title
+        self.body = body
+        self.showInMain = showInMain
+    }
+
+    /// 第一个 `showInMain == true` 的条目，否则取列表第一条
+    static func spotlight(in items: [StorageGuideItem]) -> StorageGuideItem? {
+        guard let first = items.first else { return nil }
+        return items.first { $0.showInMain } ?? first
+    }
 }
 
 /// 收藏条目：仅存标题与正文
@@ -19,7 +33,7 @@ struct StorageGuideFavoriteEntry: Codable, Equatable {
 /// 离线兜底（请求失败且尚未成功拉取过服务端时使用）
 enum StorageGuideCatalog {
     static let fallbackTips: [StorageGuideItem] = [
-        StorageGuideItem(title: "分区存放", body: "按使用场景划区：厨房、卧室、玄关等；重物放低处，轻物与常用放顺手高度。"),
+        StorageGuideItem(title: "分区存放", body: "按使用场景划区：厨房、卧室、玄关等；重物放低处，轻物与常用放顺手高度。", showInMain: true),
         StorageGuideItem(title: "垂直空间", body: "层架、挂钩、门后收纳袋，把墙面和柜内纵向空间用起来。"),
         StorageGuideItem(title: "透明与标签", body: "密闭盒可贴标签或用手机拍照封面，减少翻找时间。"),
         StorageGuideItem(title: "进一出一", body: "新购物品入库前，考虑淘汰一件同类，控制总量。"),
@@ -67,7 +81,12 @@ enum StorageGuideAPI {
                 let items: [StorageGuideItem] = arr.compactMap { o in
                     guard let title = o["title"] as? String,
                           let body = o["body"] as? String else { return nil }
-                    return StorageGuideItem(title: title, body: body)
+                    let show: Bool = {
+                        if let b = o["showInMain"] as? Bool { return b }
+                        if let n = o["showInMain"] as? NSNumber { return n.boolValue }
+                        return false
+                    }()
+                    return StorageGuideItem(title: title, body: body, showInMain: show)
                 }
                 completion(.success(items))
             }
