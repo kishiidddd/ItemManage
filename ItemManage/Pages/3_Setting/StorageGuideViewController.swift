@@ -23,8 +23,9 @@ final class StorageGuideViewController: UIViewController {
         return s
     }()
 
-    /// 贴士 id -> 星标按钮，便于同步收藏状态
-    private var starButtons: [String: UIButton] = [:]
+    /// 与 `starButtons` 下标一致，用于刷新星标状态
+    private var displayedItems: [StorageGuideItem] = []
+    private var starButtons: [Int: UIButton] = [:]
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -66,9 +67,7 @@ final class StorageGuideViewController: UIViewController {
         headerRow.addArrangedSubview(favEntry)
         contentStack.addArrangedSubview(headerRow)
 
-        for item in StorageGuideCatalog.tips {
-            contentStack.addArrangedSubview(guideCard(item: item))
-        }
+        reloadTipCards(with: StorageGuideRuntimeData.displayItems)
 
         NotificationCenter.default.addObserver(
             self,
@@ -81,6 +80,36 @@ final class StorageGuideViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         navigationController?.setNavigationBarHidden(true, animated: animated)
+        loadTipsFromNetwork()
+    }
+
+    private func reloadTipCards(with items: [StorageGuideItem]) {
+        while contentStack.arrangedSubviews.count > 1 {
+            let v = contentStack.arrangedSubviews.last!
+            contentStack.removeArrangedSubview(v)
+            v.removeFromSuperview()
+        }
+        starButtons.removeAll()
+        displayedItems = items
+        for (index, item) in items.enumerated() {
+            contentStack.addArrangedSubview(guideCard(item: item, index: index))
+        }
+    }
+
+    private func loadTipsFromNetwork() {
+        StorageGuideAPI.fetchTips { [weak self] result in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                switch result {
+                case .success(let items):
+                    StorageGuideRuntimeData.applyServerItems(items)
+                    self.reloadTipCards(with: items)
+                    self.favoritesDidChange()
+                case .failure:
+                    break
+                }
+            }
+        }
     }
 
     deinit {
@@ -94,21 +123,25 @@ final class StorageGuideViewController: UIViewController {
 
     @objc private func favoritesDidChange() {
         let store = StorageGuideFavoritesStore.shared
-        for (id, button) in starButtons {
-            updateStarButton(button, favorited: store.isFavorite(id: id))
+        for idx in 0..<displayedItems.count {
+            let item = displayedItems[idx]
+            guard let button = starButtons[idx] else { continue }
+            updateStarButton(button, favorited: store.isFavorite(title: item.title, body: item.body))
         }
     }
 
-    private func toggleFavorite(id: String) {
+    private func toggleFavorite(at index: Int) {
+        guard index >= 0, index < displayedItems.count else { return }
+        let item = displayedItems[index]
         let store = StorageGuideFavoritesStore.shared
-        if store.isFavorite(id: id) {
-            _ = store.setFavorite(id: id, starred: false)
-            if let b = starButtons[id] { updateStarButton(b, favorited: false) }
+        if store.isFavorite(title: item.title, body: item.body) {
+            store.remove(title: item.title, body: item.body)
+            if let b = starButtons[index] { updateStarButton(b, favorited: false) }
             return
         }
-        switch store.setFavorite(id: id, starred: true) {
+        switch store.add(title: item.title, body: item.body) {
         case .success:
-            if let b = starButtons[id] { updateStarButton(b, favorited: true) }
+            if let b = starButtons[index] { updateStarButton(b, favorited: true) }
         case .failure:
             let alert = UIAlertController(
                 title: "已达收藏上限",
@@ -125,7 +158,7 @@ final class StorageGuideViewController: UIViewController {
         button.setImage(UIImage(systemName: name), for: .normal)
     }
 
-    private func guideCard(item: StorageGuideItem) -> UIView {
+    private func guideCard(item: StorageGuideItem, index: Int) -> UIView {
         let card = UIView()
         card.backgroundColor = .secondarySystemGroupedBackground
         card.layer.cornerRadius = 12
@@ -148,13 +181,13 @@ final class StorageGuideViewController: UIViewController {
             UIImage.SymbolConfiguration(pointSize: 18, weight: .medium),
             forImageIn: .normal
         )
-        let id = item.id
+        let idx = index
         starButton.addAction(UIAction { [weak self] _ in
-            self?.toggleFavorite(id: id)
+            self?.toggleFavorite(at: idx)
         }, for: .touchUpInside)
 
-        starButtons[id] = starButton
-        updateStarButton(starButton, favorited: StorageGuideFavoritesStore.shared.isFavorite(id: id))
+        starButtons[index] = starButton
+        updateStarButton(starButton, favorited: StorageGuideFavoritesStore.shared.isFavorite(title: item.title, body: item.body))
 
         card.addSubview(tl)
         card.addSubview(bl)

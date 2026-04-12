@@ -1,6 +1,6 @@
 //
 //  StorageGuideFavoritesViewController.swift
-//  ItemManage — 收纳指南收藏列表（最多 8 条）
+//  ItemManage — 收纳指南收藏列表（本地存标题+正文，最多 8 条）
 //
 
 import UIKit
@@ -8,7 +8,7 @@ import SnapKit
 
 final class StorageGuideFavoritesViewController: UIViewController {
 
-    private var items: [StorageGuideItem] = []
+    private var entries: [StorageGuideFavoriteEntry] = []
 
     private let tableView: UITableView = {
         let t = UITableView(frame: .zero, style: .insetGrouped)
@@ -63,23 +63,23 @@ final class StorageGuideFavoritesViewController: UIViewController {
     }
 
     @objc private func reload() {
-        items = StorageGuideFavoritesStore.shared.orderedFavoriteItems()
+        entries = StorageGuideFavoritesStore.shared.entries
         tableView.reloadData()
-        emptyLabel.isHidden = !items.isEmpty
-        tableView.isHidden = items.isEmpty
+        emptyLabel.isHidden = !entries.isEmpty
+        tableView.isHidden = entries.isEmpty
     }
 }
 
 extension StorageGuideFavoritesViewController: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        items.count
+        entries.count
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: FavoriteTipCell.reuseId, for: indexPath) as! FavoriteTipCell
-        let item = items[indexPath.row]
-        cell.configure(item: item, starred: true) { [weak self] in
-            _ = StorageGuideFavoritesStore.shared.setFavorite(id: item.id, starred: false)
+        let entry = entries[indexPath.row]
+        cell.configure(entry: entry) { [weak self] in
+            StorageGuideFavoritesStore.shared.remove(title: entry.title, body: entry.body)
             self?.reload()
         }
         return cell
@@ -140,12 +140,11 @@ private final class FavoriteTipCell: UITableViewCell {
 
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
-    func configure(item: StorageGuideItem, starred: Bool, onUnfavorite: @escaping () -> Void) {
-        titleLabel.text = item.title
-        bodyLabel.text = item.body
+    func configure(entry: StorageGuideFavoriteEntry, onUnfavorite: @escaping () -> Void) {
+        titleLabel.text = entry.title
+        bodyLabel.text = entry.body
         self.onUnfavorite = onUnfavorite
-        let img = UIImage(systemName: starred ? "star.fill" : "star")
-        starButton.setImage(img, for: .normal)
+        starButton.setImage(UIImage(systemName: "star.fill"), for: .normal)
     }
 
     @objc private func starTapped() {
