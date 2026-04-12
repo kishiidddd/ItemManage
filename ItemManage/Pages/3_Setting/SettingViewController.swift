@@ -94,6 +94,49 @@ class SettingViewController: UIViewController {
         sv.alignment = .leading
         return sv
     }()
+
+    // MARK: - 物品统计（进入统计页）
+    private lazy var statsCardView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .white
+        view.layer.cornerRadius = 12
+        view.layer.shadowColor = UIColor.black.cgColor
+        view.layer.shadowOpacity = 0.05
+        view.layer.shadowOffset = CGSize(width: 0, height: 1)
+        view.layer.shadowRadius = 4
+        return view
+    }()
+
+    private lazy var statsIconImageView: UIImageView = {
+        let iv = UIImageView()
+        iv.image = UIImage(named: "setting_cal") ?? UIImage(systemName: "chart.bar.fill")
+        iv.contentMode = .scaleAspectFit
+        iv.tintColor = .systemBlue
+        return iv
+    }()
+
+    private lazy var statsLabel: UILabel = {
+        let label = UILabel()
+        label.text = "物品统计"
+        label.font = .systemFont(ofSize: 16, weight: .medium)
+        label.textColor = .black
+        return label
+    }()
+
+    private lazy var statsArrowImageView: UIImageView = {
+        let iv = UIImageView()
+        iv.image = UIImage(systemName: "chevron.right")
+        iv.contentMode = .scaleAspectFit
+        iv.tintColor = .gray
+        return iv
+    }()
+
+    private lazy var statsButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.backgroundColor = .clear
+        button.addTarget(self, action: #selector(statsButtonTapped), for: .touchUpInside)
+        return button
+    }()
     
     // MARK: - 规则设置卡片（点击跳转到单独页面）
     private lazy var rulesCardView: UIView = {
@@ -182,6 +225,12 @@ class SettingViewController: UIViewController {
         userInfoStackView.addArrangedSubview(loginButton)
         userInfoStackView.addArrangedSubview(usernameLabel)
         userInfoStackView.addArrangedSubview(welcomeLabel)
+
+        contentView.addSubview(statsCardView)
+        statsCardView.addSubview(statsIconImageView)
+        statsCardView.addSubview(statsLabel)
+        statsCardView.addSubview(statsArrowImageView)
+        statsCardView.addSubview(statsButton)
         
         // 添加规则设置卡片
         setupRulesCard()
@@ -300,10 +349,38 @@ class SettingViewController: UIViewController {
             make.centerY.equalTo(loginCardView)
             make.right.equalTo(loginCardView).offset(-16)
         }
+
+        statsCardView.snp.makeConstraints { make in
+            make.top.equalTo(loginCardView.snp.bottom).offset(20)
+            make.left.equalTo(contentView).offset(20)
+            make.right.equalTo(contentView).offset(-20)
+            make.height.equalTo(70)
+        }
+
+        statsIconImageView.snp.makeConstraints { make in
+            make.left.equalTo(statsCardView).offset(16)
+            make.centerY.equalTo(statsCardView)
+            make.width.height.equalTo(24)
+        }
+
+        statsLabel.snp.makeConstraints { make in
+            make.left.equalTo(statsIconImageView.snp.right).offset(12)
+            make.centerY.equalTo(statsCardView)
+        }
+
+        statsArrowImageView.snp.makeConstraints { make in
+            make.right.equalTo(statsCardView).offset(-16)
+            make.centerY.equalTo(statsCardView)
+            make.width.height.equalTo(16)
+        }
+
+        statsButton.snp.makeConstraints { make in
+            make.edges.equalTo(statsCardView)
+        }
         
         // 规则卡片约束
         rulesCardView.snp.makeConstraints { make in
-            make.top.equalTo(loginCardView.snp.bottom).offset(20)
+            make.top.equalTo(statsCardView.snp.bottom).offset(20)
             make.left.equalTo(contentView).offset(20)
             make.right.equalTo(contentView).offset(-20)
             make.height.equalTo(70)
@@ -366,6 +443,11 @@ class SettingViewController: UIViewController {
         }
     }
     
+    @objc private func statsButtonTapped() {
+        let vc = CalculateViewController()
+        navigationController?.pushViewController(vc, animated: true)
+    }
+
     @objc private func rulesButtonTapped() {
         print("点击了规则设置卡片")
         let rulesVC = ItemRulesViewController()

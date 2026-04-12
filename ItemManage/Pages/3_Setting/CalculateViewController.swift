@@ -43,14 +43,6 @@ class CalculateViewController: UIViewController {
         return view
     }()
 
-    private let titleLabel: UILabel = {
-        let label = UILabel()
-        label.text = "物品统计"
-        label.font = .systemFont(ofSize: 24, weight: .bold)
-        label.textColor = .black
-        return label
-    }()
-
     private let statsStackView: UIStackView = {
         let sv = UIStackView()
         sv.axis = .horizontal
@@ -129,8 +121,7 @@ class CalculateViewController: UIViewController {
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
-        navigationItem.title = nil
-        navigationItem.largeTitleDisplayMode = .never
+        title = "物品统计"
         view.backgroundColor = .systemBackground
         setupUI()
         setupConstraints()
@@ -140,8 +131,7 @@ class CalculateViewController: UIViewController {
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        // 本 Tab 使用独立 NavigationController，仅影响「统计」页
-        navigationController?.setNavigationBarHidden(true, animated: animated)
+        navigationController?.setNavigationBarHidden(false, animated: animated)
         loadStatsData()
     }
 
@@ -150,8 +140,6 @@ class CalculateViewController: UIViewController {
 
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
-
-        contentView.addSubview(titleLabel)
 
         contentView.addSubview(statsStackView)
         statsStackView.addArrangedSubview(countCard)
@@ -170,8 +158,7 @@ class CalculateViewController: UIViewController {
 
     private func setupConstraints() {
         scrollView.snp.makeConstraints { make in
-            make.top.equalTo(view.safeAreaLayoutGuide.snp.top)
-            make.left.right.bottom.equalToSuperview()
+            make.edges.equalToSuperview()
         }
 
         contentView.snp.makeConstraints { make in
@@ -179,13 +166,8 @@ class CalculateViewController: UIViewController {
             make.width.equalTo(scrollView)
         }
 
-        titleLabel.snp.makeConstraints { make in
-            make.top.equalTo(contentView).offset(8)
-            make.centerX.equalTo(contentView)
-        }
-
         statsStackView.snp.makeConstraints { make in
-            make.top.equalTo(titleLabel.snp.bottom).offset(16)
+            make.top.equalTo(contentView).offset(16)
             make.left.equalTo(contentView).offset(20)
             make.right.equalTo(contentView).offset(-20)
             make.height.equalTo(80)

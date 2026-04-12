@@ -30,8 +30,8 @@ class FWMainTabViewController: UITabBarController {
                                       image: UIImage(named: "tab_remind_icon")?.withRenderingMode(.alwaysOriginal),
                                       selectedImage: UIImage(named: "tab_remind_icon_select")?.withRenderingMode(.alwaysOriginal))
         
-        let vc3 = CalculateViewController() //AddItemMainViewController()
-        vc3.tabBarItem = UITabBarItem(title: "统计",
+        let vc3 = StorageGuideViewController()
+        vc3.tabBarItem = UITabBarItem(title: "指南",
                                       image: UIImage(named: "tab_add_icon")?.withRenderingMode(.alwaysOriginal),
                                       selectedImage: UIImage(named: "tab_add_icon_select")?.withRenderingMode(.alwaysOriginal))
 
