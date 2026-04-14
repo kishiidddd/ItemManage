@@ -19,11 +19,13 @@ class RegistViewController: UIViewController {
         return iv
     }()
     
-    private lazy var titleImageView: UIImageView = {
-        let iv = UIImageView()
-        iv.image = UIImage(named: "regist_text")
-        iv.contentMode = .scaleAspectFit
-        return iv
+    private lazy var titleLabel: UILabel = {
+        let l = UILabel()
+        l.text = "帐号注册"
+        l.font = .systemFont(ofSize: 36, weight: .bold)
+        l.textColor = .black.withAlphaComponent(0.8)
+        l.textAlignment = .center
+        return l
     }()
     
     private lazy var cardView: UIView = {
@@ -62,7 +64,7 @@ class RegistViewController: UIViewController {
     // 密码输入框
     private lazy var passwordField: UITextField = {
         let tf = UITextField()
-        tf.placeholder = "请输入密码"
+        tf.placeholder = "请输入密码，至少6位"
         tf.font = .systemFont(ofSize: 16)
         tf.borderStyle = .none
         tf.isSecureTextEntry = true
@@ -90,7 +92,7 @@ class RegistViewController: UIViewController {
     // 确认密码输入框
     private lazy var confirmPasswordField: UITextField = {
         let tf = UITextField()
-        tf.placeholder = "请再次输入密码"
+        tf.placeholder = "请再次输入密码，至少6位"
         tf.font = .systemFont(ofSize: 16)
         tf.borderStyle = .none
         tf.isSecureTextEntry = true
@@ -162,7 +164,7 @@ class RegistViewController: UIViewController {
         view.backgroundColor = .white
         
         view.addSubview(backgroundImageView)
-        view.addSubview(titleImageView)
+        view.addSubview(titleLabel)
         view.addSubview(cardView)
         
         cardView.addSubview(accountField)
@@ -180,10 +182,9 @@ class RegistViewController: UIViewController {
             make.height.equalTo(260)
         }
         
-        titleImageView.snp.makeConstraints { make in
+        titleLabel.snp.makeConstraints { make in
             make.top.equalTo(view.safeAreaLayoutGuide).offset(40)
             make.centerX.equalToSuperview()
-            make.width.equalTo(200)
             make.height.equalTo(60)
         }
         
@@ -263,7 +264,7 @@ class RegistViewController: UIViewController {
         }
         
         guard let password = passwordField.text, !password.isEmpty else {
-            showAlert(message: "请输入密码")
+            showAlert(message: "请输入密码，至少6位")
             return
         }
         

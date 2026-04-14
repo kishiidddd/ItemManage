@@ -66,10 +66,8 @@ class HomeMessageScrollView: UIView {
         card.layer.cornerRadius = 22
         card.layer.masksToBounds = true
 
-        let icon = UIImageView(image: UIImage(systemName: "books.vertical.fill"))
-        icon.tintColor = .systemIndigo
+        let icon = UIImageView(image: UIImage(named: "icon_tips"))
         icon.contentMode = .scaleAspectFit
-        icon.preferredSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 28, weight: .medium)
 
         let subtitle = UILabel()
         subtitle.text = "今日贴士"
@@ -92,7 +90,7 @@ class HomeMessageScrollView: UIView {
         icon.snp.makeConstraints { make in
             make.left.equalToSuperview().offset(14)
             make.centerY.equalToSuperview()
-            make.width.height.equalTo(36)
+            make.width.height.equalTo(28)
         }
         subtitle.snp.makeConstraints { make in
             make.top.equalToSuperview().offset(14)
@@ -128,10 +126,8 @@ class HomeMessageScrollView: UIView {
         card.layer.cornerRadius = 22
         card.layer.masksToBounds = true
 
-        let icon = UIImageView(image: UIImage(systemName: "exclamationmark.triangle.fill"))
-        icon.tintColor = .systemRed
+        let icon = UIImageView(image: UIImage(named: "icon_expired"))
         icon.contentMode = .scaleAspectFit
-        icon.preferredSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 26, weight: .medium)
 
         let subtitle = UILabel()
         subtitle.text = "已过期"
@@ -154,7 +150,7 @@ class HomeMessageScrollView: UIView {
         icon.snp.makeConstraints { make in
             make.left.equalToSuperview().offset(14)
             make.centerY.equalToSuperview()
-            make.width.height.equalTo(36)
+            make.width.height.equalTo(28)
         }
         subtitle.snp.makeConstraints { make in
             make.top.equalToSuperview().offset(14)
@@ -188,10 +184,8 @@ class HomeMessageScrollView: UIView {
         card.layer.cornerRadius = 22
         card.layer.masksToBounds = true
 
-        let icon = UIImageView(image: UIImage(systemName: "clock.fill"))
-        icon.tintColor = .systemOrange
+        let icon = UIImageView(image: UIImage(named: "icon_will_expired"))
         icon.contentMode = .scaleAspectFit
-        icon.preferredSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 26, weight: .medium)
 
         let subtitle = UILabel()
         subtitle.text = "即将过期"
@@ -214,7 +208,7 @@ class HomeMessageScrollView: UIView {
         icon.snp.makeConstraints { make in
             make.left.equalToSuperview().offset(14)
             make.centerY.equalToSuperview()
-            make.width.height.equalTo(36)
+            make.width.height.equalTo(28)
         }
         subtitle.snp.makeConstraints { make in
             make.top.equalToSuperview().offset(14)

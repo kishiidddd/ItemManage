@@ -198,12 +198,8 @@ class SettingViewController: UIViewController {
         return sv
     }()
     
-    // 设置选项数据
-    private let settingItems: [(icon: String, title: String, tag: Int)] = [
-        ("setting_pri_set", "隐私设置", 0),
-        ("setting_user", "用户协议", 1),
-        ("setting_pri", "隐私政策", 2)
-    ]
+    // 设置选项数据（已移除：隐私设置/用户协议/隐私政策）
+    private let settingItems: [(icon: String, title: String, tag: Int)] = []
     
     // MARK: - Lifecycle
     override func viewDidLoad() {
@@ -249,9 +245,7 @@ class SettingViewController: UIViewController {
         // 添加规则设置卡片
         setupRulesCard()
         
-        // 添加设置选项
-        contentView.addSubview(settingsStackView)
-        createSettingItems()
+        // 设置选项已移除
     }
     
     private func setupRulesCard() {
@@ -298,7 +292,7 @@ class SettingViewController: UIViewController {
         let button = UIButton(type: .system)
         button.backgroundColor = .clear
         button.tag = tag
-        button.addTarget(self, action: #selector(settingItemTapped(_:)), for: .touchUpInside)
+        // 设置选项已移除；保留 cell 构造代码以便后续恢复时使用
         
         cellView.addSubview(iconImageView)
         cellView.addSubview(titleLabel)
@@ -401,6 +395,8 @@ class SettingViewController: UIViewController {
             make.left.equalTo(contentView).offset(20)
             make.right.equalTo(contentView).offset(-20)
             make.height.equalTo(70)
+            // 作为页面最后一个模块时，兜底撑开 scrollView 的 contentSize
+            make.bottom.equalTo(contentView).offset(-30)
         }
         
         rulesIconImageView.snp.makeConstraints { make in
@@ -424,14 +420,7 @@ class SettingViewController: UIViewController {
             make.edges.equalTo(rulesCardView)
         }
         
-        // 设置选项栈视图约束
-        settingsStackView.snp.makeConstraints { make in
-            make.top.equalTo(rulesCardView.snp.bottom).offset(20)
-            make.left.equalTo(contentView).offset(20)
-            make.right.equalTo(contentView).offset(-20)
-            make.bottom.equalTo(contentView).offset(-30)
-            make.height.equalTo(CGFloat(settingItems.count * 60))
-        }
+        // 设置选项已移除（因此 contentView 的 bottom 由 rulesCardView 约束撑开）
     }
     
     // MARK: - Data Loading
@@ -477,27 +466,7 @@ class SettingViewController: UIViewController {
         navigationController?.pushViewController(rulesVC, animated: true)
     }
     
-    @objc private func settingItemTapped(_ sender: UIButton) {
-        switch sender.tag {
-        case 0:
-            print("点击了隐私设置")
-            let privacyVC = PriSettingViewController()
-            navigationController?.pushViewController(privacyVC, animated: true)
-            
-        case 1:
-            print("点击了用户协议")
-            let agreementVC = PriSettingViewController()//
-            navigationController?.pushViewController(agreementVC, animated: true)
-            
-        case 2:
-            print("点击了隐私政策")
-            let policyVC = PriSettingViewController()//
-            navigationController?.pushViewController(policyVC, animated: true)
-            
-        default:
-            break
-        }
-    }
+    // settingItemTapped 已移除
 }
 
 
