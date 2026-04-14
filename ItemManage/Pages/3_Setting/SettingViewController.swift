@@ -103,8 +103,8 @@ class SettingViewController: UIViewController {
         return sv
     }()
 
-    // MARK: - 物品统计（进入统计页）
-    private lazy var statsCardView: UIView = {
+    // MARK: - 规则设置入口（拆分为 3 个卡片）
+    private func makeCardView() -> UIView {
         let view = UIView()
         view.backgroundColor = .white
         view.layer.cornerRadius = 12
@@ -113,79 +113,87 @@ class SettingViewController: UIViewController {
         view.layer.shadowOffset = CGSize(width: 0, height: 1)
         view.layer.shadowRadius = 4
         return view
-    }()
+    }
 
-    private lazy var statsIconImageView: UIImageView = {
-        let iv = UIImageView()
-        iv.image = UIImage(named: "setting_cal") ?? UIImage(systemName: "chart.bar.fill")
-        iv.contentMode = .scaleAspectFit
-        iv.tintColor = .systemBlue
-        return iv
-    }()
-
-    private lazy var statsLabel: UILabel = {
-        let label = UILabel()
-        label.text = "物品统计"
-        label.font = .systemFont(ofSize: 16, weight: .medium)
-        label.textColor = .black
-        return label
-    }()
-
-    private lazy var statsArrowImageView: UIImageView = {
+    private func makeArrowImageView() -> UIImageView {
         let iv = UIImageView()
         iv.image = UIImage(systemName: "chevron.right")
         iv.contentMode = .scaleAspectFit
         iv.tintColor = .gray
         return iv
+    }
+
+    private lazy var locationCardView: UIView = makeCardView()
+    private lazy var unitCardView: UIView = makeCardView()
+    private lazy var categoryCardView: UIView = makeCardView()
+
+    private lazy var locationTitleLabel: UILabel = {
+        let label = UILabel()
+        label.text = "位置设置"
+        label.font = .systemFont(ofSize: 16, weight: .medium)
+        label.textColor = .black
+        return label
     }()
 
-    private lazy var statsButton: UIButton = {
+    private lazy var locationIconImageView: UIImageView = {
+        let iv = UIImageView()
+        iv.image = UIImage(named: "setting_icon_loca")
+        iv.contentMode = .scaleAspectFit
+        return iv
+    }()
+
+    private lazy var unitTitleLabel: UILabel = {
+        let label = UILabel()
+        label.text = "单位设置"
+        label.font = .systemFont(ofSize: 16, weight: .medium)
+        label.textColor = .black
+        return label
+    }()
+
+    private lazy var unitIconImageView: UIImageView = {
+        let iv = UIImageView()
+        iv.image = UIImage(named: "setting_icon_unit")
+        iv.contentMode = .scaleAspectFit
+        return iv
+    }()
+
+    private lazy var categoryTitleLabel: UILabel = {
+        let label = UILabel()
+        label.text = "分类设置"
+        label.font = .systemFont(ofSize: 16, weight: .medium)
+        label.textColor = .black
+        return label
+    }()
+
+    private lazy var categoryIconImageView: UIImageView = {
+        let iv = UIImageView()
+        iv.image = UIImage(named: "setting_icon_cate")
+        iv.contentMode = .scaleAspectFit
+        return iv
+    }()
+
+    private lazy var locationArrowImageView: UIImageView = makeArrowImageView()
+    private lazy var unitArrowImageView: UIImageView = makeArrowImageView()
+    private lazy var categoryArrowImageView: UIImageView = makeArrowImageView()
+
+    private lazy var locationButton: UIButton = {
         let button = UIButton(type: .system)
         button.backgroundColor = .clear
-        button.addTarget(self, action: #selector(statsButtonTapped), for: .touchUpInside)
+        button.addTarget(self, action: #selector(locationButtonTapped), for: .touchUpInside)
         return button
     }()
-    
-    // MARK: - 规则设置卡片（点击跳转到单独页面）
-    private lazy var rulesCardView: UIView = {
-        let view = UIView()
-        view.backgroundColor = .white
-        view.layer.cornerRadius = 12
-        view.layer.shadowColor = UIColor.black.cgColor
-        view.layer.shadowOpacity = 0.05
-        view.layer.shadowOffset = CGSize(width: 0, height: 1)
-        view.layer.shadowRadius = 4
-        return view
-    }()
-    
-    private lazy var rulesIconImageView: UIImageView = {
-        let iv = UIImageView()
-        iv.image = UIImage(systemName: "gear.badge") ?? UIImage(systemName: "gearshape.2.fill")
-        iv.contentMode = .scaleAspectFit
-        iv.tintColor = .systemBlue
-        return iv
-    }()
-    
-    private lazy var rulesLabel: UILabel = {
-        let label = UILabel()
-        label.text = "物品规则设置"
-        label.font = .systemFont(ofSize: 16, weight: .medium)
-        label.textColor = .black
-        return label
-    }()
-    
-    private lazy var rulesArrowImageView: UIImageView = {
-        let iv = UIImageView()
-        iv.image = UIImage(systemName: "chevron.right")
-        iv.contentMode = .scaleAspectFit
-        iv.tintColor = .gray
-        return iv
-    }()
-    
-    private lazy var rulesButton: UIButton = {
+
+    private lazy var unitButton: UIButton = {
         let button = UIButton(type: .system)
         button.backgroundColor = .clear
-        button.addTarget(self, action: #selector(rulesButtonTapped), for: .touchUpInside)
+        button.addTarget(self, action: #selector(unitButtonTapped), for: .touchUpInside)
+        return button
+    }()
+
+    private lazy var categoryButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.backgroundColor = .clear
+        button.addTarget(self, action: #selector(categoryButtonTapped), for: .touchUpInside)
         return button
     }()
     
@@ -236,26 +244,30 @@ class SettingViewController: UIViewController {
         userInfoStackView.addArrangedSubview(usernameLabel)
         userInfoStackView.addArrangedSubview(welcomeLabel)
 
-        contentView.addSubview(statsCardView)
-        statsCardView.addSubview(statsIconImageView)
-        statsCardView.addSubview(statsLabel)
-        statsCardView.addSubview(statsArrowImageView)
-        statsCardView.addSubview(statsButton)
-        
-        // 添加规则设置卡片
-        setupRulesCard()
+        // 规则设置入口（拆成 3 个卡片）
+        setupRulesCards()
         
         // 设置选项已移除
     }
     
-    private func setupRulesCard() {
-        contentView.addSubview(rulesCardView)
-        
-        // 添加图标、标题和箭头
-        rulesCardView.addSubview(rulesIconImageView)
-        rulesCardView.addSubview(rulesLabel)
-        rulesCardView.addSubview(rulesArrowImageView)
-        rulesCardView.addSubview(rulesButton)
+    private func setupRulesCards() {
+        contentView.addSubview(locationCardView)
+        locationCardView.addSubview(locationIconImageView)
+        locationCardView.addSubview(locationTitleLabel)
+        locationCardView.addSubview(locationArrowImageView)
+        locationCardView.addSubview(locationButton)
+
+        contentView.addSubview(unitCardView)
+        unitCardView.addSubview(unitIconImageView)
+        unitCardView.addSubview(unitTitleLabel)
+        unitCardView.addSubview(unitArrowImageView)
+        unitCardView.addSubview(unitButton)
+
+        contentView.addSubview(categoryCardView)
+        categoryCardView.addSubview(categoryIconImageView)
+        categoryCardView.addSubview(categoryTitleLabel)
+        categoryCardView.addSubview(categoryArrowImageView)
+        categoryCardView.addSubview(categoryButton)
     }
     
     private func createSettingItems() {
@@ -361,63 +373,74 @@ class SettingViewController: UIViewController {
             make.edges.equalToSuperview()
         }
 
-        statsCardView.snp.makeConstraints { make in
+        locationCardView.snp.makeConstraints { make in
             make.top.equalTo(loginCardView.snp.bottom).offset(20)
             make.left.equalTo(contentView).offset(20)
             make.right.equalTo(contentView).offset(-20)
             make.height.equalTo(70)
         }
-
-        statsIconImageView.snp.makeConstraints { make in
-            make.left.equalTo(statsCardView).offset(16)
-            make.centerY.equalTo(statsCardView)
+        locationIconImageView.snp.makeConstraints { make in
+            make.left.equalTo(locationCardView).offset(16)
+            make.centerY.equalTo(locationCardView)
             make.width.height.equalTo(24)
         }
-
-        statsLabel.snp.makeConstraints { make in
-            make.left.equalTo(statsIconImageView.snp.right).offset(12)
-            make.centerY.equalTo(statsCardView)
+        locationTitleLabel.snp.makeConstraints { make in
+            make.left.equalTo(locationIconImageView.snp.right).offset(12)
+            make.centerY.equalTo(locationCardView)
         }
-
-        statsArrowImageView.snp.makeConstraints { make in
-            make.right.equalTo(statsCardView).offset(-16)
-            make.centerY.equalTo(statsCardView)
+        locationArrowImageView.snp.makeConstraints { make in
+            make.right.equalTo(locationCardView).offset(-16)
+            make.centerY.equalTo(locationCardView)
             make.width.height.equalTo(16)
         }
-
-        statsButton.snp.makeConstraints { make in
-            make.edges.equalTo(statsCardView)
+        locationButton.snp.makeConstraints { make in
+            make.edges.equalTo(locationCardView)
         }
-        
-        // 规则卡片约束
-        rulesCardView.snp.makeConstraints { make in
-            make.top.equalTo(statsCardView.snp.bottom).offset(20)
-            make.left.equalTo(contentView).offset(20)
-            make.right.equalTo(contentView).offset(-20)
-            make.height.equalTo(70)
+
+        unitCardView.snp.makeConstraints { make in
+            make.top.equalTo(locationCardView.snp.bottom).offset(14)
+            make.left.right.height.equalTo(locationCardView)
+        }
+        unitIconImageView.snp.makeConstraints { make in
+            make.left.equalTo(unitCardView).offset(16)
+            make.centerY.equalTo(unitCardView)
+            make.width.height.equalTo(24)
+        }
+        unitTitleLabel.snp.makeConstraints { make in
+            make.left.equalTo(unitIconImageView.snp.right).offset(12)
+            make.centerY.equalTo(unitCardView)
+        }
+        unitArrowImageView.snp.makeConstraints { make in
+            make.right.equalTo(unitCardView).offset(-16)
+            make.centerY.equalTo(unitCardView)
+            make.width.height.equalTo(16)
+        }
+        unitButton.snp.makeConstraints { make in
+            make.edges.equalTo(unitCardView)
+        }
+
+        categoryCardView.snp.makeConstraints { make in
+            make.top.equalTo(unitCardView.snp.bottom).offset(14)
+            make.left.right.height.equalTo(locationCardView)
             // 作为页面最后一个模块时，兜底撑开 scrollView 的 contentSize
             make.bottom.equalTo(contentView).offset(-30)
         }
-        
-        rulesIconImageView.snp.makeConstraints { make in
-            make.left.equalTo(rulesCardView).offset(16)
-            make.centerY.equalToSuperview()
+        categoryIconImageView.snp.makeConstraints { make in
+            make.left.equalTo(categoryCardView).offset(16)
+            make.centerY.equalTo(categoryCardView)
             make.width.height.equalTo(24)
         }
-        
-        rulesLabel.snp.makeConstraints { make in
-            make.left.equalTo(rulesIconImageView.snp.right).offset(12)
-            make.centerY.equalTo(rulesIconImageView)
+        categoryTitleLabel.snp.makeConstraints { make in
+            make.left.equalTo(categoryIconImageView.snp.right).offset(12)
+            make.centerY.equalTo(categoryCardView)
         }
-        
-        rulesArrowImageView.snp.makeConstraints { make in
-            make.right.equalTo(rulesCardView).offset(-16)
-            make.centerY.equalTo(rulesIconImageView)
+        categoryArrowImageView.snp.makeConstraints { make in
+            make.right.equalTo(categoryCardView).offset(-16)
+            make.centerY.equalTo(categoryCardView)
             make.width.height.equalTo(16)
         }
-        
-        rulesButton.snp.makeConstraints { make in
-            make.edges.equalTo(rulesCardView)
+        categoryButton.snp.makeConstraints { make in
+            make.edges.equalTo(categoryCardView)
         }
         
         // 设置选项已移除（因此 contentView 的 bottom 由 rulesCardView 约束撑开）
@@ -452,18 +475,26 @@ class SettingViewController: UIViewController {
 
     private func openLoginPage() {
         let loginVC = LoginViewController()
+        loginVC.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(loginVC, animated: true)
     }
-    
-    @objc private func statsButtonTapped() {
-        let vc = CalculateViewController()
+
+    @objc private func locationButtonTapped() {
+        let vc = LocationManagementViewController()
+        vc.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(vc, animated: true)
     }
 
-    @objc private func rulesButtonTapped() {
-        print("点击了规则设置卡片")
-        let rulesVC = ItemRulesViewController()
-        navigationController?.pushViewController(rulesVC, animated: true)
+    @objc private func unitButtonTapped() {
+        let vc = UnitManageViewController()
+        vc.hidesBottomBarWhenPushed = true
+        navigationController?.pushViewController(vc, animated: true)
+    }
+
+    @objc private func categoryButtonTapped() {
+        let vc = CategoryManageViewController()
+        vc.hidesBottomBarWhenPushed = true
+        navigationController?.pushViewController(vc, animated: true)
     }
     
     // settingItemTapped 已移除

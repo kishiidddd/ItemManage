@@ -8,6 +8,22 @@ import SnapKit
 import Kingfisher
 
 class ItemDetailPopupViewController: UIViewController {
+
+    private final class InsetLabel: UILabel {
+        var textInsets = UIEdgeInsets(top: 4, left: 10, bottom: 4, right: 10)
+
+        override func drawText(in rect: CGRect) {
+            super.drawText(in: rect.inset(by: textInsets))
+        }
+
+        override var intrinsicContentSize: CGSize {
+            let s = super.intrinsicContentSize
+            return CGSize(
+                width: s.width + textInsets.left + textInsets.right,
+                height: s.height + textInsets.top + textInsets.bottom
+            )
+        }
+    }
     
     // MARK: - Properties
     private let item: ItemModel
@@ -47,15 +63,70 @@ class ItemDetailPopupViewController: UIViewController {
         label.textColor = .black
         return label
     }()
-    
-    private lazy var categoryLabel: UILabel = {
+
+    private lazy var locationTopLabel: UILabel = {
         let label = UILabel()
+        label.font = UIFont.systemFont(ofSize: 20, weight: .semibold)
+        label.textColor = UIColor(white: 0.2, alpha: 1)
+        label.numberOfLines = 1
+        label.textAlignment = .right
+        label.lineBreakMode = .byTruncatingMiddle
+        return label
+    }()
+    
+    private lazy var categoryLabel: InsetLabel = {
+        let label = InsetLabel()
         label.font = UIFont.systemFont(ofSize: 14, weight: .medium)  // 字体调大
         label.textColor = .white
         label.backgroundColor = .systemBlue
         label.layer.cornerRadius = 6  // 圆角调大
         label.clipsToBounds = true
         label.textAlignment = .center
+        return label
+    }()
+
+    private lazy var quantityBadge: InsetLabel = {
+        let label = InsetLabel()
+        label.font = UIFont.systemFont(ofSize: 14, weight: .medium)
+        label.textColor = .white
+        label.backgroundColor = UIColor(hex: "#6C7A89")
+        label.layer.cornerRadius = 6
+        label.clipsToBounds = true
+        label.textAlignment = .center
+        return label
+    }()
+
+    private lazy var statusBadge: InsetLabel = {
+        let label = InsetLabel()
+        label.font = UIFont.systemFont(ofSize: 14, weight: .medium)
+        label.textColor = .white
+        label.backgroundColor = UIColor(hex: "#4CAF50")
+        label.layer.cornerRadius = 6
+        label.clipsToBounds = true
+        label.textAlignment = .center
+        return label
+    }()
+
+    private let badgesRow: UIStackView = {
+        let s = UIStackView()
+        s.axis = .horizontal
+        s.spacing = 10
+        s.alignment = .center
+        s.distribution = .fill
+        return s
+    }()
+
+    private let badgesSpacer: UIView = {
+        let v = UIView()
+        v.backgroundColor = .clear
+        return v
+    }()
+
+    private lazy var remarksPlainLabel: UILabel = {
+        let label = UILabel()
+        label.font = UIFont.systemFont(ofSize: 16)
+        label.textColor = UIColor(white: 0.55, alpha: 1)
+        label.numberOfLines = 0
         return label
     }()
     
@@ -105,7 +176,7 @@ class ItemDetailPopupViewController: UIViewController {
     private lazy var editButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("编辑", for: .normal)
-        button.setImage(UIImage(systemName: "pencil"), for: .normal)
+        button.setImage(nil, for: .normal)
         button.backgroundColor = .systemBlue
         button.setTitleColor(.white, for: .normal)
         button.layer.cornerRadius = 8
@@ -117,10 +188,12 @@ class ItemDetailPopupViewController: UIViewController {
     private lazy var deleteButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("删除", for: .normal)
-        button.setImage(UIImage(systemName: "trash"), for: .normal)
-        button.backgroundColor = .systemRed
-        button.setTitleColor(.white, for: .normal)
+        button.setImage(nil, for: .normal)
+        button.backgroundColor = .white
+        button.setTitleColor(.systemBlue, for: .normal)
         button.layer.cornerRadius = 8
+        button.layer.borderWidth = 1
+        button.layer.borderColor = UIColor.systemBlue.cgColor
         button.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
         button.addTarget(self, action: #selector(deleteButtonTapped), for: .touchUpInside)
         return button
@@ -186,7 +259,7 @@ class ItemDetailPopupViewController: UIViewController {
     }
     
     private func setupCardContent() {
-        // 名称和分类行
+        // 名称 + 位置（同一行）
         let topStack = UIStackView()
         topStack.axis = .horizontal
         topStack.spacing = 12
@@ -198,8 +271,9 @@ class ItemDetailPopupViewController: UIViewController {
         }
         
         topStack.addArrangedSubview(nameLabel)
-        topStack.addArrangedSubview(categoryLabel)
-        categoryLabel.setContentHuggingPriority(.required, for: .horizontal)
+        topStack.addArrangedSubview(locationTopLabel)
+        locationTopLabel.setContentHuggingPriority(.required, for: .horizontal)
+        locationTopLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
         
         // 分割线
         cardContentView.addSubview(dividerLine)
@@ -220,11 +294,36 @@ class ItemDetailPopupViewController: UIViewController {
             make.left.right.equalToSuperview().inset(16)
             photosHeightConstraint = make.height.equalTo(0).constraint
         }
+
+        // 分类 / 数量 / 状态 badges（放在图片下面；无图片时会紧贴分割线下方）
+        cardContentView.addSubview(badgesRow)
+        badgesRow.addArrangedSubview(categoryLabel)
+        badgesRow.addArrangedSubview(quantityBadge)
+        badgesRow.addArrangedSubview(statusBadge)
+        badgesRow.addArrangedSubview(badgesSpacer)
+        [categoryLabel, quantityBadge, statusBadge].forEach { label in
+            label.setContentHuggingPriority(.required, for: .horizontal)
+            label.setContentCompressionResistancePriority(.required, for: .horizontal)
+        }
+        badgesSpacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        badgesSpacer.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        badgesRow.snp.makeConstraints { make in
+            make.top.equalTo(photosScrollView.snp.bottom).offset(12)
+            make.left.right.equalToSuperview().inset(16)
+            make.height.greaterThanOrEqualTo(26)
+        }
+
+        // 备注（灰色纯文本，放在标签下面）
+        cardContentView.addSubview(remarksPlainLabel)
+        remarksPlainLabel.snp.makeConstraints { make in
+            make.top.equalTo(badgesRow.snp.bottom).offset(10)
+            make.left.right.equalToSuperview().inset(16)
+        }
         
         // 信息容器
         cardContentView.addSubview(infoContainer)
         infoContainer.snp.makeConstraints { make in
-            make.top.equalTo(photosScrollView.snp.bottom).offset(16)
+            make.top.equalTo(remarksPlainLabel.snp.bottom).offset(16)
             make.left.right.equalToSuperview().inset(16)
         }
         
@@ -267,12 +366,18 @@ class ItemDetailPopupViewController: UIViewController {
         // 使用仓库中的最新数据（含合并后的 photos），避免弹窗持有旧引用导致图片为空
         let model = repository.getItem(byId: item.id) ?? item
 
+        // 避免重复追加信息行
+        infoContainer.arrangedSubviews.forEach { v in
+            infoContainer.removeArrangedSubview(v)
+            v.removeFromSuperview()
+        }
+
         nameLabel.text = model.name
         configurePhotos(from: model)
         
         // 分类
         if let category = model.category {
-            categoryLabel.text = " \(category.icon) \(category.name) "
+            categoryLabel.text = " \(category.name) "
             let color = UIColor(hex: category.color)
             categoryLabel.backgroundColor = color
             
@@ -280,36 +385,49 @@ class ItemDetailPopupViewController: UIViewController {
         } else {
             categoryLabel.isHidden = true
         }
-        
-        // 数量
-        addInfoRow(icon: "number", title: "数量", value: "\(model.quantity)")
-        
-        // 单位
-        if let unit = model.unit {
-            addInfoRow(icon: "ruler", title: "单位", value: unit.name)
+
+        // 数量 badge：显示“数量+单位”；无单位则显示“3(数量)”
+        if let unit = model.unit, !unit.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            quantityBadge.text = "\(model.quantity)\(unit.name)"
+        } else {
+            quantityBadge.text = "\(model.quantity)(数量)"
+        }
+        quantityBadge.isHidden = false
+
+        // 状态 badge：显示在图片下面（不在信息行里显示）
+        if let expiryDate = model.expiryDate {
+            let daysUntilExpire = Calendar.current.dateComponents([.day], from: Date(), to: expiryDate).day ?? 0
+            if daysUntilExpire < 0 {
+                statusBadge.text = "已过期"
+                statusBadge.backgroundColor = .systemRed
+            } else if daysUntilExpire <= 3 {
+                statusBadge.text = "即将过期"
+                statusBadge.backgroundColor = .systemOrange
+            } else {
+                statusBadge.text = "正常"
+                statusBadge.backgroundColor = .systemGreen
+            }
+            statusBadge.isHidden = false
+        } else {
+            statusBadge.isHidden = true
         }
         
         // 价格字段已移除（totalPrice）
         
         // 位置信息
         configureLocationInfo()
-        
-        // 时效信息
-        configureTimeInfo()
+        // 原来的数量 / 生产日期 / 保质期 / 过期日期 / 状态：不显示
         
         // 备注
         if let remarks = model.remarks, !remarks.isEmpty {
-            addInfoRow(icon: "note.text", title: "备注", value: remarks)
+            remarksPlainLabel.text = remarks
+            remarksPlainLabel.isHidden = false
+        } else {
+            remarksPlainLabel.text = nil
+            remarksPlainLabel.isHidden = true
         }
         
-        if infoContainer.arrangedSubviews.isEmpty {
-            let emptyLabel = UILabel()
-            emptyLabel.text = "暂无其他信息"
-            emptyLabel.font = UIFont.systemFont(ofSize: 14)
-            emptyLabel.textColor = .lightGray
-            emptyLabel.textAlignment = .center
-            infoContainer.addArrangedSubview(emptyLabel)
-        }
+        // 不显示“暂无其他信息”
         
         view.setNeedsLayout()
         view.layoutIfNeeded()
@@ -387,10 +505,10 @@ class ItemDetailPopupViewController: UIViewController {
         if let secondaryLocation = model.secondaryLocation {
             locationPath.append(secondaryLocation.name)
         }
-        
-        if !locationPath.isEmpty {
-            addInfoRow(icon: "location.fill", title: "位置", value: locationPath.joined(separator: " → "))
-        }
+
+        let text = locationPath.joined(separator: " → ")
+        locationTopLabel.text = text
+        locationTopLabel.isHidden = text.isEmpty
     }
     
     private func configureTimeInfo() {

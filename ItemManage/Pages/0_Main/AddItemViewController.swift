@@ -394,7 +394,7 @@ class AddItemViewController: UIViewController {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] category in
                 if let category = category {
-                    self?.categoryField.setValue("\(category.icon) \(category.name)")
+                    self?.categoryField.setValue(category.name)
                 } else {
                     self?.categoryField.setValue("请选择")
                 }
@@ -530,7 +530,7 @@ class AddItemViewController: UIViewController {
         nameField.setText(viewModel.name)
         
         if let category = viewModel.selectedCategory {
-            categoryField.setValue("\(category.icon) \(category.name)")
+            categoryField.setValue(category.name)
         }
         
         if let primaryLocation = viewModel.selectedPrimaryLocation {
@@ -623,9 +623,16 @@ class AddItemViewController: UIViewController {
     
     private func showCategoryPicker() {
         let alert = UIAlertController(title: "选择分类", message: nil, preferredStyle: .actionSheet)
+
+        alert.addAction(UIAlertAction(title: "添加分类", style: .default) { [weak self] _ in
+            guard let self = self else { return }
+            let vc = CategoryManageViewController()
+            vc.hidesBottomBarWhenPushed = true
+            self.navigationController?.pushViewController(vc, animated: true)
+        })
         
         for category in viewModel.categories {
-            alert.addAction(UIAlertAction(title: "\(category.icon) \(category.name)", style: .default) { [weak self] _ in
+            alert.addAction(UIAlertAction(title: category.name, style: .default) { [weak self] _ in
                 self?.viewModel.selectedCategory = category
             })
         }
@@ -642,9 +649,16 @@ class AddItemViewController: UIViewController {
     
     private func showPrimaryLocationPicker() {
         let alert = UIAlertController(title: "选择存放位置", message: nil, preferredStyle: .actionSheet)
+
+        alert.addAction(UIAlertAction(title: "添加位置", style: .default) { [weak self] _ in
+            guard let self = self else { return }
+            let vc = LocationManagementViewController()
+            vc.hidesBottomBarWhenPushed = true
+            self.navigationController?.pushViewController(vc, animated: true)
+        })
         
         for location in viewModel.primaryLocations {
-            alert.addAction(UIAlertAction(title: "\(location.icon) \(location.name)", style: .default) { [weak self] _ in
+            alert.addAction(UIAlertAction(title: location.name, style: .default) { [weak self] _ in
                 self?.viewModel.selectedPrimaryLocation = location
                 self?.viewModel.selectedSecondaryLocation = nil
             })
@@ -674,6 +688,13 @@ class AddItemViewController: UIViewController {
         }
         
         let alert = UIAlertController(title: "选择具体位置", message: nil, preferredStyle: .actionSheet)
+
+        alert.addAction(UIAlertAction(title: "添加位置", style: .default) { [weak self] _ in
+            guard let self = self else { return }
+            let vc = LocationManagementViewController()
+            vc.hidesBottomBarWhenPushed = true
+            self.navigationController?.pushViewController(vc, animated: true)
+        })
         
         for location in secondaryLocations {
             alert.addAction(UIAlertAction(title: "\(location.icon) \(location.name)", style: .default) { [weak self] _ in
@@ -693,6 +714,13 @@ class AddItemViewController: UIViewController {
     
     private func showUnitPicker() {
         let alert = UIAlertController(title: "选择单位", message: nil, preferredStyle: .actionSheet)
+
+        alert.addAction(UIAlertAction(title: "添加单位", style: .default) { [weak self] _ in
+            guard let self = self else { return }
+            let vc = UnitManageViewController()
+            vc.hidesBottomBarWhenPushed = true
+            self.navigationController?.pushViewController(vc, animated: true)
+        })
         
         alert.addAction(UIAlertAction(title: "无", style: .default) { [weak self] _ in
             self?.viewModel.selectedUnit = nil

@@ -44,14 +44,15 @@ class LocationManagementViewController: UIViewController {
         return tv
     }()
 
-    private lazy var addPrimaryButton: UIButton = {
+    // 底部大按钮已移除，改为标题右侧的 icon 按钮
+
+    private lazy var addPrimaryIconButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("添加一级位置", for: .normal)
-        button.setImage(UIImage(systemName: "plus.circle.fill"), for: .normal)
-        button.backgroundColor = .systemBlue
-        button.setTitleColor(.white, for: .normal)
-        button.layer.cornerRadius = 8
-        button.titleLabel?.font = UIFont.systemFont(ofSize: 14, weight: .medium)
+        button.setImage(UIImage(named: "loca_icon_add")?.withRenderingMode(.alwaysOriginal), for: .normal)
+        button.tintColor = .clear
+        button.contentHorizontalAlignment = .fill
+        button.contentVerticalAlignment = .fill
+        button.contentEdgeInsets = UIEdgeInsets(top: 6, left: 6, bottom: 6, right: 6)
         button.addTarget(self, action: #selector(addPrimaryLocationTapped), for: .touchUpInside)
         return button
     }()
@@ -80,14 +81,15 @@ class LocationManagementViewController: UIViewController {
         return tv
     }()
 
-    private lazy var addSecondaryButton: UIButton = {
+    // 底部大按钮已移除，改为标题右侧的 icon 按钮
+
+    private lazy var addSecondaryIconButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("添加二级位置", for: .normal)
-        button.setImage(UIImage(systemName: "plus.circle.fill"), for: .normal)
-        button.backgroundColor = .systemGreen
-        button.setTitleColor(.white, for: .normal)
-        button.layer.cornerRadius = 8
-        button.titleLabel?.font = UIFont.systemFont(ofSize: 14, weight: .medium)
+        button.setImage(UIImage(named: "loca_icon_add")?.withRenderingMode(.alwaysOriginal), for: .normal)
+        button.tintColor = .clear
+        button.contentHorizontalAlignment = .fill
+        button.contentVerticalAlignment = .fill
+        button.contentEdgeInsets = UIEdgeInsets(top: 6, left: 6, bottom: 6, right: 6)
         button.addTarget(self, action: #selector(addSecondaryLocationTapped), for: .touchUpInside)
         return button
     }()
@@ -144,46 +146,46 @@ class LocationManagementViewController: UIViewController {
     }
 
     private func setupLeftView() {
-        leftContainer.addSubview(leftTitleLabel)
-        leftTitleLabel.snp.makeConstraints { make in
+        let leftHeaderRow = UIStackView(arrangedSubviews: [leftTitleLabel, UIView(), addPrimaryIconButton])
+        leftHeaderRow.axis = .horizontal
+        leftHeaderRow.alignment = .center
+        leftHeaderRow.spacing = 8
+        leftContainer.addSubview(leftHeaderRow)
+        leftHeaderRow.snp.makeConstraints { make in
             make.top.equalTo(leftContainer.safeAreaLayoutGuide.snp.top).offset(12)
             make.left.right.equalToSuperview().inset(16)
         }
-
-        leftContainer.addSubview(addPrimaryButton)
-        addPrimaryButton.snp.makeConstraints { make in
-            make.left.right.equalToSuperview().inset(16)
-            make.bottom.equalTo(leftContainer.safeAreaLayoutGuide.snp.bottom).offset(-12)
-            make.height.equalTo(44)
+        addPrimaryIconButton.snp.makeConstraints { make in
+            make.width.height.equalTo(42)
         }
 
         leftContainer.addSubview(leftTableView)
         leftTableView.snp.makeConstraints { make in
-            make.top.equalTo(leftTitleLabel.snp.bottom).offset(12)
+            make.top.equalTo(leftHeaderRow.snp.bottom).offset(12)
             make.left.right.equalToSuperview()
-            make.bottom.equalTo(addPrimaryButton.snp.top).offset(-12)
+            make.bottom.equalTo(leftContainer.safeAreaLayoutGuide.snp.bottom).offset(-12)
         }
     }
 
     private func setupRightView() {
-        rightContainer.addSubview(rightTitleLabel)
-        rightTitleLabel.snp.makeConstraints { make in
+        let rightHeaderRow = UIStackView(arrangedSubviews: [rightTitleLabel, UIView(), addSecondaryIconButton])
+        rightHeaderRow.axis = .horizontal
+        rightHeaderRow.alignment = .center
+        rightHeaderRow.spacing = 8
+        rightContainer.addSubview(rightHeaderRow)
+        rightHeaderRow.snp.makeConstraints { make in
             make.top.equalTo(rightContainer.safeAreaLayoutGuide.snp.top).offset(12)
             make.left.right.equalToSuperview().inset(16)
         }
-
-        rightContainer.addSubview(addSecondaryButton)
-        addSecondaryButton.snp.makeConstraints { make in
-            make.left.right.equalToSuperview().inset(16)
-            make.bottom.equalTo(rightContainer.safeAreaLayoutGuide.snp.bottom).offset(-12)
-            make.height.equalTo(44)
+        addSecondaryIconButton.snp.makeConstraints { make in
+            make.width.height.equalTo(42)
         }
 
         rightContainer.addSubview(rightTableView)
         rightTableView.snp.makeConstraints { make in
-            make.top.equalTo(rightTitleLabel.snp.bottom).offset(12)
+            make.top.equalTo(rightHeaderRow.snp.bottom).offset(12)
             make.left.right.equalToSuperview()
-            make.bottom.equalTo(addSecondaryButton.snp.top).offset(-12)
+            make.bottom.equalTo(rightContainer.safeAreaLayoutGuide.snp.bottom).offset(-12)
         }
 
         rightContainer.addSubview(emptyStateLabel)

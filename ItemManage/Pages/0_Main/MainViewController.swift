@@ -153,6 +153,7 @@ class MainViewController: UIViewController {
     private func setupTapBack(){
         homeTopView.onAddTapped = {
             let vc = AddItemViewController()
+            vc.hidesBottomBarWhenPushed = true
             self.navigateToViewController(vc)
         }
     }

@@ -64,12 +64,7 @@ final class StorageGuideViewController: UIViewController {
     private func setupTableHeader() {
         let header = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 52))
         let btn = UIButton(type: .system)
-        btn.setImage(UIImage(systemName: "star.square.on.square"), for: .normal)
-        btn.tintColor = .label
-        btn.setPreferredSymbolConfiguration(
-            UIImage.SymbolConfiguration(pointSize: 22, weight: .medium),
-            forImageIn: .normal
-        )
+        btn.setImage(UIImage(named: "icon_tips")?.withRenderingMode(.alwaysOriginal), for: .normal)
         btn.addTarget(self, action: #selector(openFavorites), for: .touchUpInside)
         header.addSubview(btn)
         btn.snp.makeConstraints { make in
@@ -125,6 +120,7 @@ final class StorageGuideViewController: UIViewController {
 
     @objc private func openFavorites() {
         let vc = StorageGuideFavoritesViewController()
+        vc.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(vc, animated: true)
     }
 

@@ -26,15 +26,23 @@ class LocationCell: UITableViewCell {
     
     let editButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setImage(UIImage(systemName: "pencil"), for: .normal)
-        button.tintColor = .systemBlue
+        button.setImage(UIImage(named: "loca_icon_edit")?.withRenderingMode(.alwaysOriginal), for: .normal)
+        button.tintColor = .clear
+        button.imageView?.contentMode = .scaleAspectFit
+        button.contentHorizontalAlignment = .fill
+        button.contentVerticalAlignment = .fill
+        button.contentEdgeInsets = UIEdgeInsets(top: 6, left: 6, bottom: 6, right: 6)
         return button
     }()
     
     let deleteButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setImage(UIImage(systemName: "trash"), for: .normal)
-        button.tintColor = .systemRed
+        button.setImage(UIImage(named: "loca_icon_delete")?.withRenderingMode(.alwaysOriginal), for: .normal)
+        button.tintColor = .clear
+        button.imageView?.contentMode = .scaleAspectFit
+        button.contentHorizontalAlignment = .fill
+        button.contentVerticalAlignment = .fill
+        button.contentEdgeInsets = UIEdgeInsets(top: 6, left: 6, bottom: 6, right: 6)
         return button
     }()
     
