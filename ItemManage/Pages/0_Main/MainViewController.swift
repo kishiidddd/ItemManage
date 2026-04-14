@@ -63,6 +63,7 @@ class MainViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        messageScrollView.presentingHost = self
         messageScrollView.onGuideSpotlightTapped = { [weak self] in
             self?.openStorageGuideTab()
         }
@@ -78,6 +79,7 @@ class MainViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         refreshHomeGuideSpotlightFromServer()
+        messageScrollView.updateFromHome(allItems: ItemRepository.shared.allItems)
     }
 
     /// 拉取指南列表并刷新首页主推卡片文案（失败时仍用本地兜底 `displayItems`）
@@ -87,7 +89,7 @@ class MainViewController: UIViewController {
                 if case .success(let items) = result {
                     StorageGuideRuntimeData.applyServerItems(items)
                 }
-                self?.messageScrollView.updateGuideSpotlight()
+                self?.messageScrollView.updateFromHome(allItems: ItemRepository.shared.allItems)
             }
         }
     }
@@ -137,6 +139,13 @@ class MainViewController: UIViewController {
             .sink { [weak self] items in
                 print("搜索结果：\(items.map { $0.name })")
                 self?.searchTableView.reloadData()
+            }
+            .store(in: &cancellables)
+
+        ItemRepository.shared.$allItems
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] items in
+                self?.messageScrollView.updateFromHome(allItems: items)
             }
             .store(in: &cancellables)
     }
