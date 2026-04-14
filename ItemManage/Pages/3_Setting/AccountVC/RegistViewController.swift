@@ -276,16 +276,31 @@ class RegistViewController: UIViewController {
             showAlert(message: "两次输入的密码不一致")
             return
         }
-        
-        // 这里添加注册逻辑
-        print("注册：账号：\(account)，密码：\(password)")
-        
-        // 模拟注册成功
-        UserDefaults.standard.set(true, forKey: "isLoggedIn")
-        UserDefaults.standard.set(account, forKey: "username")
-        
-        // 返回上一页
-        navigationController?.popViewController(animated: true)
+
+        registerButton.isEnabled = false
+        ItemAPIClient.shared.perform(
+            path: "auth/register",
+            method: "POST",
+            jsonBody: ["username": account, "password": password]
+        ) { [weak self] result in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                self.registerButton.isEnabled = true
+                switch result {
+                case .failure(let e):
+                    self.showAlert(message: e.localizedDescription)
+                case .success(let json):
+                    guard let auth = self.parseAuthPayload(json),
+                          !auth.token.isEmpty else {
+                        self.showAlert(message: "注册响应格式错误")
+                        return
+                    }
+                    AuthSession.shared.saveLogin(token: auth.token, userId: auth.userId, username: auth.username)
+                    ItemRepository.shared.loadData()
+                    self.navigationController?.popViewController(animated: true)
+                }
+            }
+        }
     }
     
     @objc private func loginButtonTapped() {
@@ -313,6 +328,18 @@ class RegistViewController: UIViewController {
         let alert = UIAlertController(title: "提示", message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "确定", style: .default))
         present(alert, animated: true)
+    }
+
+    private func parseAuthPayload(_ json: Any) -> (token: String, userId: String, username: String)? {
+        guard let dict = json as? [String: Any],
+              let data = dict["data"] as? [String: Any],
+              let token = data["token"] as? String,
+              let user = data["user"] as? [String: Any],
+              let userId = user["id"] as? String,
+              let username = user["username"] as? String else {
+            return nil
+        }
+        return (token: token, userId: userId, username: username)
     }
     
     deinit {

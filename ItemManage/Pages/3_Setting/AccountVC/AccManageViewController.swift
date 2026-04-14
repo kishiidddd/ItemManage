@@ -211,9 +211,9 @@ class AccManageViewController: UIViewController {
         // 这里执行退出登录的逻辑
         // 比如清除用户信息、跳转到登录页等
         
-        // 清除用户登录状态
-        UserDefaults.standard.set(false, forKey: "isLoggedIn")
-        UserDefaults.standard.removeObject(forKey: "username")
+        // 清除本地登录态（含 token）
+        AuthSession.shared.clear()
+        ItemRepository.shared.loadData()
         
         // 返回到登录页或首页
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {

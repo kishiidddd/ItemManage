@@ -15,6 +15,9 @@ enum ItemPhotoUploadService {
         var req = URLRequest(url: url)
         req.httpMethod = "POST"
         req.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        if let token = AuthSession.shared.token, !token.isEmpty {
+            req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
         let filename = fileURL.lastPathComponent
         let partMime = mimeType(for: filename)
         var body = Data()

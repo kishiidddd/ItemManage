@@ -58,6 +58,9 @@ final class ItemAPIClient {
         var req = URLRequest(url: u)
         req.httpMethod = method
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        if let token = AuthSession.shared.token, !token.isEmpty {
+            req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
         if let jsonBody = jsonBody {
             req.httpBody = try? JSONSerialization.data(withJSONObject: jsonBody, options: [])
         }

@@ -69,6 +69,14 @@ class SettingViewController: UIViewController {
         button.addTarget(self, action: #selector(loginButtonTapped), for: .touchUpInside)
         return button
     }()
+
+    /// 覆盖整张登录卡片：已登录时也可点击进入登录页切换账号
+    private lazy var loginCardTapButton: UIButton = {
+        let button = UIButton(type: .custom)
+        button.backgroundColor = .clear
+        button.addTarget(self, action: #selector(loginCardTapped), for: .touchUpInside)
+        return button
+    }()
     
     private lazy var usernameLabel: UILabel = {
         let label = UILabel()
@@ -204,6 +212,11 @@ class SettingViewController: UIViewController {
         setupConstraints()
         updateLoginState()
     }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        updateLoginState()
+    }
     
     
     // MARK: - Setup UI
@@ -221,6 +234,7 @@ class SettingViewController: UIViewController {
         contentView.addSubview(loginCardView)
         loginCardView.addSubview(avatarImageView)
         loginCardView.addSubview(userInfoStackView)
+        loginCardView.addSubview(loginCardTapButton)
         
         userInfoStackView.addArrangedSubview(loginButton)
         userInfoStackView.addArrangedSubview(usernameLabel)
@@ -349,6 +363,9 @@ class SettingViewController: UIViewController {
             make.centerY.equalTo(loginCardView)
             make.right.equalTo(loginCardView).offset(-16)
         }
+        loginCardTapButton.snp.makeConstraints { make in
+            make.edges.equalToSuperview()
+        }
 
         statsCardView.snp.makeConstraints { make in
             make.top.equalTo(loginCardView.snp.bottom).offset(20)
@@ -420,10 +437,10 @@ class SettingViewController: UIViewController {
     // MARK: - Data Loading
     private func updateLoginState() {
         // 从 UserDefaults 或其他地方获取登录状态
-        isLoggedIn = UserDefaults.standard.bool(forKey: "isLoggedIn")
+        isLoggedIn = AuthSession.shared.isLoggedIn
         
         if isLoggedIn {
-            let savedUsername = UserDefaults.standard.string(forKey: "username") ?? "用户"
+            let savedUsername = AuthSession.shared.username ?? "用户"
             usernameLabel.text = savedUsername
             usernameLabel.isHidden = false
             loginButton.isHidden = true
@@ -436,11 +453,17 @@ class SettingViewController: UIViewController {
     // MARK: - Actions
     @objc private func loginButtonTapped() {
         print("点击了登录按钮")
-        
-        if !isLoggedIn {
-            let loginVC = LoginViewController()
-            navigationController?.pushViewController(loginVC, animated: true)
-        }
+        openLoginPage()
+    }
+
+    @objc private func loginCardTapped() {
+        print("点击了登录卡片")
+        openLoginPage()
+    }
+
+    private func openLoginPage() {
+        let loginVC = LoginViewController()
+        navigationController?.pushViewController(loginVC, animated: true)
     }
     
     @objc private func statsButtonTapped() {
