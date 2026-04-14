@@ -289,10 +289,7 @@ class ItemDetailPopupViewController: UIViewController {
             addInfoRow(icon: "ruler", title: "单位", value: unit.name)
         }
         
-        // 价格
-        if let totalPrice = model.totalPrice {
-            addInfoRow(icon: "yensign.circle", title: "价格", value: String(format: "¥%.2f", totalPrice))
-        }
+        // 价格字段已移除（totalPrice）
         
         // 位置信息
         configureLocationInfo()

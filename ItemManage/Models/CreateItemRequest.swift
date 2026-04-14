@@ -14,7 +14,6 @@ class CreateItemRequest: HandyJSON {
     var name: String = ""
     var categoryId: String = ""
     var quantity: Int = 1
-    var totalPrice: Double?
     var unitId: String?
     
     // 位置相关字段
@@ -37,7 +36,6 @@ class CreateItemRequest: HandyJSON {
     convenience init(name: String,
                      categoryId: String,
                      quantity: Int = 1,
-                     totalPrice: Double? = nil,
                      unitId: String? = nil,
                      productionDate: Date? = nil,
                      shelfLife: Int? = nil,
@@ -48,7 +46,6 @@ class CreateItemRequest: HandyJSON {
         self.name = name
         self.categoryId = categoryId
         self.quantity = quantity
-        self.totalPrice = totalPrice
         self.unitId = unitId
         self.productionDate = productionDate
         self.shelfLife = shelfLife
@@ -63,7 +60,6 @@ class CreateItemRequest: HandyJSON {
         self.name = item.name
         self.categoryId = item.categoryId
         self.quantity = item.quantity
-        self.totalPrice = item.totalPrice
         self.unitId = item.unitId
         self.primaryLocationId = item.primaryLocationId
         self.secondaryLocationId = item.secondaryLocationId
@@ -152,10 +148,6 @@ class CreateItemRequest: HandyJSON {
             "level": level
         ]
         
-        if let totalPrice = totalPrice {
-            dict["totalPrice"] = totalPrice
-        }
-        
         if let unitId = unitId {
             dict["unitId"] = unitId
         }
@@ -216,7 +208,6 @@ class UpdateItemRequest: HandyJSON {
     var name: String?
     var categoryId: String?
     var quantity: Int?
-    var totalPrice: Double?
     var unitId: String?
     var primaryLocationId: String?
     var secondaryLocationId: String?
@@ -235,7 +226,6 @@ class UpdateItemRequest: HandyJSON {
         self.name = item.name
         self.categoryId = item.categoryId
         self.quantity = item.quantity
-        self.totalPrice = item.totalPrice
         self.unitId = item.unitId
         self.primaryLocationId = item.primaryLocationId
         self.secondaryLocationId = item.secondaryLocationId
@@ -288,10 +278,6 @@ class UpdateItemRequest: HandyJSON {
         
         if let quantity = quantity {
             dict["quantity"] = quantity
-        }
-        
-        if let totalPrice = totalPrice {
-            dict["totalPrice"] = totalPrice
         }
         
         if let unitId = unitId {

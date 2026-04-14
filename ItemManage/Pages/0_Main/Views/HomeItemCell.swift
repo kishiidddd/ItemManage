@@ -51,13 +51,6 @@ class HomeItemCell: UITableViewCell {
         return label
     }()
     
-    private let priceLabel: UILabel = {
-        let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 14, weight: .medium)
-        label.textColor = .systemBlue
-        label.textAlignment = .right
-        return label
-    }()
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -78,7 +71,6 @@ class HomeItemCell: UITableViewCell {
         cardView.addSubview(nameLabel)
         cardView.addSubview(quantityLabel)
         cardView.addSubview(statusLabel)
-        cardView.addSubview(priceLabel)
         
         // 卡片：自适应高度，保证第三行「过期状态」不被 80pt 固定高度压没
         cardView.snp.makeConstraints { make in
@@ -98,7 +90,7 @@ class HomeItemCell: UITableViewCell {
         nameLabel.snp.makeConstraints { make in
             make.top.equalToSuperview().offset(12)
             make.left.equalTo(itemImageView.snp.right).offset(12)
-            make.right.lessThanOrEqualTo(priceLabel.snp.left).offset(-8)
+            make.right.lessThanOrEqualToSuperview().offset(-12)
         }
         
         quantityLabel.snp.makeConstraints { make in
@@ -113,11 +105,6 @@ class HomeItemCell: UITableViewCell {
             make.bottom.equalToSuperview().offset(-12)
         }
         
-        priceLabel.snp.makeConstraints { make in
-            make.top.equalTo(nameLabel)
-            make.right.equalToSuperview().offset(-12)
-            make.width.greaterThanOrEqualTo(60)
-        }
     }
     
     func configure(with item: ItemModel) {
@@ -156,12 +143,6 @@ class HomeItemCell: UITableViewCell {
             statusLabel.textColor = .gray
         }
         
-        // 设置价格
-        if let totalPrice = item.totalPrice {
-            priceLabel.text = String(format: "¥%.2f", totalPrice)
-        } else {
-            priceLabel.text = "¥0.00"
-        }
     }
     
     override func prepareForReuse() {

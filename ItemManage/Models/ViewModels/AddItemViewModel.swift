@@ -11,7 +11,6 @@ class AddItemViewModel: ObservableObject {
     @Published var selectedPrimaryLocation: PrimaryLocationModel?
     @Published var selectedSecondaryLocation: SecondaryLocationModel?
     @Published var quantity: Int = 1
-    @Published var totalPrice: String = ""
     @Published var selectedUnit: UnitModel?
     @Published var photos: [PhotoModel] = []
     @Published var productionDate: Date?
@@ -206,11 +205,6 @@ class AddItemViewModel: ObservableObject {
         name = item.name
         selectedCategory = repository.categories.first { $0.id == item.categoryId }
         quantity = item.quantity
-        
-        if let totalPrice = item.totalPrice {
-            self.totalPrice = String(format: "%.2f", totalPrice)
-        }
-        
         selectedUnit = repository.units.first { $0.id == item.unitId }
         
         // 加载位置信息
@@ -255,12 +249,6 @@ class AddItemViewModel: ObservableObject {
         item.name = name.trimmingCharacters(in: .whitespacesAndNewlines)
         item.categoryId = selectedCategory?.id ?? ""
         item.quantity = quantity
-        
-        if let priceText = totalPrice.isEmpty ? nil : totalPrice,
-           let price = Double(priceText) {
-            item.totalPrice = price
-        }
-        
         item.unitId = selectedUnit?.id
         
         // 设置位置
@@ -302,14 +290,6 @@ class AddItemViewModel: ObservableObject {
             return false
         }
         
-        // 验证价格格式
-        if !totalPrice.isEmpty {
-            if let price = Double(totalPrice), price < 0 {
-                errorMessage = "价格不能为负数"
-                return false
-            }
-        }
-        
         // 验证日期逻辑
         if let productionDate = productionDate, let expiryDate = expiryDate {
             if expiryDate < productionDate {
@@ -330,22 +310,12 @@ class AddItemViewModel: ObservableObject {
     
     private func setupValidation() {
         // 监听表单字段变化，验证表单有效性
-        Publishers.CombineLatest4($name, $selectedCategory, $quantity, $totalPrice)
-            .map { name, category, quantity, price in
+        Publishers.CombineLatest3($name, $selectedCategory, $quantity)
+            .map { name, category, quantity in
                 let isNameValid = !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                 let isCategoryValid = category != nil
                 let isQuantityValid = quantity > 0
-                
-                var isPriceValid = true
-                if !price.isEmpty {
-                    if let priceValue = Double(price) {
-                        isPriceValid = priceValue >= 0
-                    } else {
-                        isPriceValid = false
-                    }
-                }
-                
-                return isNameValid && isCategoryValid && isQuantityValid && isPriceValid
+                return isNameValid && isCategoryValid && isQuantityValid
             }
             .assign(to: &$isFormValid)
     }

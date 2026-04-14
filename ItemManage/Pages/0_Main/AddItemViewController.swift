@@ -89,18 +89,6 @@ class AddItemViewController: UIViewController {
         return field
     }()
     
-    private lazy var priceField: CustomTextField = {
-        let field = CustomTextField()
-        field.configure(
-            title: "总价",
-            placeholder: "选填",
-            keyboardType: .decimalPad
-        )
-        field.textField.delegate = self
-        field.textField.addTarget(self, action: #selector(priceFieldChanged), for: .editingChanged)
-        return field
-    }()
-    
     private lazy var unitField: CustomPickerField = {
         let field = CustomPickerField()
         field.configure(title: "单位", placeholder: "选择单位")
@@ -258,8 +246,6 @@ class AddItemViewController: UIViewController {
         basicSectionView.contentStack.addArrangedSubview(secondaryLocationField)
         basicSectionView.contentStack.addArrangedSubview(createSeparator())
         basicSectionView.contentStack.addArrangedSubview(quantityField)
-        basicSectionView.contentStack.addArrangedSubview(createSeparator())
-        basicSectionView.contentStack.addArrangedSubview(priceField)
         basicSectionView.contentStack.addArrangedSubview(createSeparator())
         basicSectionView.contentStack.addArrangedSubview(unitField)
         
@@ -447,14 +433,6 @@ class AddItemViewController: UIViewController {
             }
             .store(in: &cancellables)
         
-        // 监听价格变化
-        viewModel.$totalPrice
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] price in
-                self?.priceField.setText(price)
-            }
-            .store(in: &cancellables)
-        
         // 监听单位变化
         viewModel.$selectedUnit
             .receive(on: DispatchQueue.main)
@@ -564,7 +542,6 @@ class AddItemViewController: UIViewController {
         }
         
         quantityField.setValue(viewModel.quantity)
-        priceField.setText(viewModel.totalPrice)
         unitField.setValue(viewModel.selectedUnit?.name ?? "无")
         photosView.configure(with: viewModel.photos, canAddMore: viewModel.canAddMorePhotos)
         
@@ -591,10 +568,6 @@ class AddItemViewController: UIViewController {
     
     @objc private func nameFieldChanged() {
         viewModel.name = nameField.getText()
-    }
-    
-    @objc private func priceFieldChanged() {
-        viewModel.totalPrice = priceField.getText()
     }
     
     @objc private func categoryTapped() {

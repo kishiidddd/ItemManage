@@ -7,7 +7,6 @@ class ItemModel: HandyJSON {
     var name: String = ""
     var categoryId: String = ""
     var quantity: Int = 1
-    var totalPrice: Double?
     var unitId: String?
     var photos: [PhotoModel] = []
     
@@ -50,13 +49,7 @@ class ItemModel: HandyJSON {
     
     // MARK: - 计算属性
     
-    // 计算属性：单价
-    var unitPrice: Double? {
-        if let totalPrice = totalPrice, quantity > 0 {
-            return totalPrice / Double(quantity)
-        }
-        return nil
-    }
+    // 价格字段已移除（totalPrice）
     
     // 计算属性：是否过期
     var isExpired: Bool {
@@ -110,13 +103,7 @@ class ItemModel: HandyJSON {
         }
     }
     
-    // 计算属性：显示价格
-    var displayPrice: String {
-        if let totalPrice = totalPrice {
-            return String(format: "¥%.2f", totalPrice)
-        }
-        return "未设置"
-    }
+    // displayPrice 已移除
     
     // 计算属性：显示单位
     var displayUnit: String {
