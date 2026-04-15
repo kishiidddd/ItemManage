@@ -45,7 +45,7 @@ class MainViewController: UIViewController {
     // 顶部搜索容器（用于吸顶）
     private lazy var searchContainer: UIView = {
         let view = UIView()
-        view.backgroundColor = .text1Color.withAlphaComponent(0.3)
+        view.backgroundColor = .lightGrayBgColor
         view.isHidden = true
         return view
     }()
@@ -57,7 +57,7 @@ class MainViewController: UIViewController {
         tv.delegate = self
         tv.dataSource = self
         tv.isHidden = true
-        tv.backgroundColor = .text1Color.withAlphaComponent(0.3)
+        tv.backgroundColor = .lightGrayBgColor
         return tv
     }()
 
@@ -159,6 +159,7 @@ class MainViewController: UIViewController {
     }
 
     private func setupUI(){
+        view.backgroundColor = .lightGrayBgColor
         view.addSubview(homeTopView)
         view.addSubview(grayBg)
         view.addSubview(messageScrollView)

@@ -33,7 +33,7 @@ class CalculateViewController: UIViewController {
         let sv = UIScrollView()
         sv.showsVerticalScrollIndicator = false
         sv.alwaysBounceVertical = true
-        sv.backgroundColor = .clear
+        sv.backgroundColor = .lightGrayBgColor
         return sv
     }()
 
@@ -122,7 +122,7 @@ class CalculateViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         title = "物品统计"
-        view.backgroundColor = .systemBackground
+        view.backgroundColor = .lightGrayBgColor
         setupUI()
         setupConstraints()
         applyStatistics()

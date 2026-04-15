@@ -11,7 +11,7 @@ class ViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .red.withAlphaComponent(0.1)
+        view.backgroundColor = .lightGrayBgColor
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             let mainTabBarController = FWMainTabViewController()

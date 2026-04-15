@@ -16,7 +16,7 @@ class LocationManagementViewController: UIViewController {
 
     private lazy var splitContainer: UIView = {
         let view = UIView()
-        view.backgroundColor = .systemGroupedBackground
+        view.backgroundColor = .lightGrayBgColor
         return view
     }()
 
@@ -112,7 +112,7 @@ class LocationManagementViewController: UIViewController {
     }
 
     private func setupUI() {
-        view.backgroundColor = .systemGroupedBackground
+        view.backgroundColor = .lightGrayBgColor
         title = "位置管理"
 
         view.addSubview(splitContainer)
@@ -225,20 +225,14 @@ class LocationManagementViewController: UIViewController {
     }
 
     @objc private func addPrimaryLocationTapped() {
-        let alert = UIAlertController(title: "添加一级位置", message: nil, preferredStyle: .alert)
-        alert.addTextField { textField in
-            textField.placeholder = "位置名称（如：冰箱、衣柜）"
-        }
-
-        let addAction = UIAlertAction(title: "添加", style: .default) { [weak self] _ in
-            guard let name = alert.textFields?.first?.text else { return }
+        showCustomTextFieldAlert(
+            title: "添加一级位置",
+            placeholder: "位置名称（如：冰箱、衣柜）",
+            cancelTitle: "取消",
+            confirmTitle: "添加"
+        ) { [weak self] name in
             self?.viewModel.addPrimaryLocation(name: name)
         }
-
-        alert.addAction(addAction)
-        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
-
-        present(alert, animated: true)
     }
 
     @objc private func addSecondaryLocationTapped() {
@@ -248,20 +242,15 @@ class LocationManagementViewController: UIViewController {
             return
         }
 
-        let alert = UIAlertController(title: "添加二级位置", message: "位置：\(primaryLocation.name)", preferredStyle: .alert)
-        alert.addTextField { textField in
-            textField.placeholder = "位置名称（如：冷藏层、挂衣区）"
-        }
-
-        let addAction = UIAlertAction(title: "添加", style: .default) { [weak self] _ in
-            guard let name = alert.textFields?.first?.text else { return }
+        showCustomTextFieldAlert(
+            title: "添加二级位置",
+            subtitle: "位置：\(primaryLocation.name)",
+            placeholder: "位置名称（如：冷藏层、挂衣区）",
+            cancelTitle: "取消",
+            confirmTitle: "添加"
+        ) { [weak self] name in
             self?.viewModel.addSecondaryLocation(name: name)
         }
-
-        alert.addAction(addAction)
-        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
-
-        present(alert, animated: true)
     }
 
     @objc private func editPrimaryLocation(_ sender: UIButton) {
@@ -269,21 +258,15 @@ class LocationManagementViewController: UIViewController {
         guard index < viewModel.primaryLocations.count else { return }
         let location = viewModel.primaryLocations[index]
 
-        let alert = UIAlertController(title: "编辑一级位置", message: nil, preferredStyle: .alert)
-        alert.addTextField { textField in
-            textField.text = location.name
-            textField.placeholder = "位置名称"
-        }
-
-        let saveAction = UIAlertAction(title: "保存", style: .default) { [weak self] _ in
-            guard let newName = alert.textFields?.first?.text else { return }
+        showCustomTextFieldAlert(
+            title: "编辑一级位置",
+            placeholder: "位置名称",
+            initialText: location.name,
+            cancelTitle: "取消",
+            confirmTitle: "保存"
+        ) { [weak self] newName in
             self?.viewModel.editPrimaryLocation(at: index, name: newName)
         }
-
-        alert.addAction(saveAction)
-        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
-
-        present(alert, animated: true)
     }
 
     @objc private func editSecondaryLocation(_ sender: UIButton) {
@@ -291,21 +274,15 @@ class LocationManagementViewController: UIViewController {
         guard index < viewModel.secondaryLocations.count else { return }
         let location = viewModel.secondaryLocations[index]
 
-        let alert = UIAlertController(title: "编辑二级位置", message: nil, preferredStyle: .alert)
-        alert.addTextField { textField in
-            textField.text = location.name
-            textField.placeholder = "位置名称"
-        }
-
-        let saveAction = UIAlertAction(title: "保存", style: .default) { [weak self] _ in
-            guard let newName = alert.textFields?.first?.text else { return }
+        showCustomTextFieldAlert(
+            title: "编辑二级位置",
+            placeholder: "位置名称",
+            initialText: location.name,
+            cancelTitle: "取消",
+            confirmTitle: "保存"
+        ) { [weak self] newName in
             self?.viewModel.editSecondaryLocation(at: index, name: newName)
         }
-
-        alert.addAction(saveAction)
-        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
-
-        present(alert, animated: true)
     }
 
     @objc private func deletePrimaryLocation(_ sender: UIButton) {
@@ -318,18 +295,15 @@ class LocationManagementViewController: UIViewController {
             return
         }
 
-        let alert = UIAlertController(
+        showCustomAlert(
             title: "删除一级位置",
-            message: "确定要删除位置“\(location.name)”吗？\n该位置下的所有二级位置也将被删除。",
-            preferredStyle: .alert
-        )
-
-        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
-        alert.addAction(UIAlertAction(title: "删除", style: .destructive) { [weak self] _ in
+            subtitle: "确定要删除位置“\(location.name)”吗？\n该位置下的所有二级位置也将被删除。",
+            cancelTitle: "取消",
+            confirmTitle: "删除",
+            onCancel: nil,
+            onConfirm: { [weak self] in
             self?.viewModel.deletePrimary(at: index)
         })
-
-        present(alert, animated: true)
     }
 
     @objc private func deleteSecondaryLocation(_ sender: UIButton) {
@@ -342,24 +316,24 @@ class LocationManagementViewController: UIViewController {
             return
         }
 
-        let alert = UIAlertController(
+        showCustomAlert(
             title: "删除二级位置",
-            message: "确定要删除位置“\(location.name)”吗？",
-            preferredStyle: .alert
-        )
-
-        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
-        alert.addAction(UIAlertAction(title: "删除", style: .destructive) { [weak self] _ in
+            subtitle: "确定要删除位置“\(location.name)”吗？",
+            cancelTitle: "取消",
+            confirmTitle: "删除",
+            onCancel: nil,
+            onConfirm: { [weak self] in
             self?.viewModel.deleteSecondary(at: index)
         })
-
-        present(alert, animated: true)
     }
 
     private func showAlert(message: String) {
-        let alert = UIAlertController(title: "提示", message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "确定", style: .default))
-        present(alert, animated: true)
+        showCustomAlert(
+            title: "提示",
+            subtitle: message,
+            cancelTitle: nil,
+            confirmTitle: "确定"
+        )
     }
 }
 

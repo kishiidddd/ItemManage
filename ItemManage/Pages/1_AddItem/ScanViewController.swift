@@ -11,7 +11,7 @@ import SnapKit
 class ScanViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .white
+        view.backgroundColor = .lightGrayBgColor
         title = "拍照识别"
     }
 }

@@ -15,7 +15,7 @@ class AddItemViewController: UIViewController {
         let sv = UIScrollView()
         sv.showsVerticalScrollIndicator = true
         sv.keyboardDismissMode = .interactive
-        sv.backgroundColor = .systemGroupedBackground
+        sv.backgroundColor = .lightGrayBgColor
         return sv
     }()
 
@@ -29,7 +29,7 @@ class AddItemViewController: UIViewController {
         return sv
     }()
 
-    private lazy var basicSectionView = SectionView(title: "基本信息")
+    private lazy var basicSectionView = SectionView(title: "")
     private lazy var nameField: CustomTextField = {
         let field = CustomTextField()
         field.configure(title: "物品名称", placeholder: "请输入物品名称", isRequired: true)
@@ -74,17 +74,17 @@ class AddItemViewController: UIViewController {
         return field
     }()
 
-    private lazy var photosSectionView = SectionView(title: "物品照片")
+    private lazy var photosSectionView = SectionView(title: "")
     private lazy var photosView: PhotosView = {
         let v = PhotosView()
         v.delegate = self
         return v
     }()
 
-    private lazy var timeSectionView = SectionView(title: "时效信息")
+    private lazy var timeSectionView = SectionView(title: "")
     private lazy var shelfLifeField: CustomTextField = {
         let field = CustomTextField()
-        field.configure(title: "保质期", placeholder: "请输入天数（选填）", keyboardType: .numberPad)
+        field.configure(title: "保质期", placeholder: "请输入天数", keyboardType: .numberPad)
         field.textField.delegate = self
         field.textField.addTarget(self, action: #selector(shelfLifeFieldChanged), for: .editingChanged)
         return field
@@ -104,7 +104,14 @@ class AddItemViewController: UIViewController {
         return field
     }()
 
-    private lazy var remarksSectionView = SectionView(title: "备注信息")
+    private lazy var remarksSectionView = SectionView(title: "")
+    private lazy var remarksTitleLabel: UILabel = {
+        let label = UILabel()
+        label.text = "备注"
+        label.font = .systemFont(ofSize: 16, weight: .medium)
+        label.textColor = .label
+        return label
+    }()
     private lazy var remarksTextView: CustomTextView = {
         let tv = CustomTextView()
         tv.configure(placeholder: "请输入补充说明...", maxLength: 200)
@@ -112,8 +119,12 @@ class AddItemViewController: UIViewController {
         return tv
     }()
 
-    private lazy var saveButton = UIBarButtonItem(title: "保存", style: .done, target: self, action: #selector(saveButtonTapped))
-    private lazy var cancelButton = UIBarButtonItem(title: "取消", style: .plain, target: self, action: #selector(cancelButtonTapped))
+    private lazy var saveButton = UIBarButtonItem(
+        title: viewModel.isEditing ? "保存" : "添加",
+        style: .done,
+        target: self,
+        action: #selector(saveButtonTapped)
+    )
 
     init(item: ItemModel? = nil) {
         viewModel = AddItemViewModel(item: item)
@@ -128,7 +139,6 @@ class AddItemViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        navigationItem.leftBarButtonItem = cancelButton
         navigationItem.rightBarButtonItem = saveButton
         saveButton.isEnabled = false
         setupKeyboardHandling()
@@ -235,7 +245,7 @@ class AddItemViewController: UIViewController {
     // MARK: - UI
 
     private func setupUI() {
-        view.backgroundColor = .systemGroupedBackground
+        view.backgroundColor = .lightGrayBgColor
         title = viewModel.isEditing ? "编辑物品" : "添加物品"
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
@@ -265,6 +275,7 @@ class AddItemViewController: UIViewController {
         timeSectionView.contentStack.arrangedSubviews.last?.removeFromSuperview()
 
         stackView.addArrangedSubview(remarksSectionView)
+        remarksSectionView.contentStack.addArrangedSubview(remarksTitleLabel)
         remarksSectionView.contentStack.addArrangedSubview(remarksTextView)
 
         let spacer = UIView()
@@ -311,10 +322,6 @@ class AddItemViewController: UIViewController {
         }
     }
 
-    @objc private func cancelButtonTapped() {
-        navigationController?.popViewController(animated: true)
-    }
-
     @objc private func nameFieldChanged() { viewModel.name = nameField.getText() }
     @objc private func categoryTapped() { showCategoryPicker() }
     @objc private func primaryLocationTapped() { showPrimaryLocationPicker() }
@@ -339,9 +346,12 @@ class AddItemViewController: UIViewController {
     @objc private func dismissKeyboard() { view.endEditing(true) }
 
     private func showError(_ message: String) {
-        let a = UIAlertController(title: "提示", message: message, preferredStyle: .alert)
-        a.addAction(UIAlertAction(title: "确定", style: .default))
-        present(a, animated: true)
+        showCustomAlert(
+            title: "提示",
+            subtitle: message,
+            cancelTitle: nil,
+            confirmTitle: "确定"
+        )
     }
 
     // MARK: - 选择器

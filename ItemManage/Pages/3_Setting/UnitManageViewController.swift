@@ -14,7 +14,7 @@ final class UnitManageViewController: UIViewController {
 
     private let tableView: UITableView = {
         let tv = UITableView(frame: .zero, style: .insetGrouped)
-        tv.backgroundColor = .systemGroupedBackground
+        tv.backgroundColor = .lightGrayBgColor
         tv.separatorStyle = .singleLine
         tv.register(UITableViewCell.self, forCellReuseIdentifier: "cell")
         return tv
@@ -22,7 +22,7 @@ final class UnitManageViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .systemGroupedBackground
+        view.backgroundColor = .lightGrayBgColor
         title = "单位设置"
 
         tableView.delegate = self
@@ -47,36 +47,35 @@ final class UnitManageViewController: UIViewController {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] message in
                 guard let self = self, let message = message, !message.isEmpty else { return }
-                let alert = UIAlertController(title: "保存失败", message: message, preferredStyle: .alert)
-                alert.addAction(UIAlertAction(title: "确定", style: .default))
-                self.present(alert, animated: true)
+                self.showCustomAlert(title: "保存失败", subtitle: message, cancelTitle: nil, confirmTitle: "确定")
                 self.viewModel.clearError()
             }
             .store(in: &cancellables)
     }
 
     private func promptAddUnit() {
-        let alert = UIAlertController(title: "添加单位", message: nil, preferredStyle: .alert)
-        alert.addTextField { tf in
-            tf.placeholder = "单位名称（如：个、件、瓶）"
-        }
-        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
-        alert.addAction(UIAlertAction(title: "添加", style: .default) { [weak self] _ in
-            let name = alert.textFields?.first?.text ?? ""
+        showCustomTextFieldAlert(
+            title: "添加单位",
+            placeholder: "单位名称（如：个、件、瓶）",
+            cancelTitle: "取消",
+            confirmTitle: "添加"
+        ) { [weak self] name in
             self?.viewModel.addUnit(name: name)
-        })
-        present(alert, animated: true)
+        }
     }
 
     private func confirmDeleteUnit(at index: Int) {
         guard viewModel.units.indices.contains(index) else { return }
         let unit = viewModel.units[index]
-        let alert = UIAlertController(title: "删除单位", message: "确定要删除单位“\(unit.name)”吗？", preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
-        alert.addAction(UIAlertAction(title: "删除", style: .destructive) { [weak self] _ in
+        showCustomAlert(
+            title: "删除单位",
+            subtitle: "确定要删除单位“\(unit.name)”吗？",
+            cancelTitle: "取消",
+            confirmTitle: "删除",
+            onCancel: nil,
+            onConfirm: { [weak self] in
             self?.viewModel.deleteUnit(at: index)
         })
-        present(alert, animated: true)
     }
 }
 
@@ -93,9 +92,11 @@ extension UnitManageViewController: UITableViewDataSource, UITableViewDelegate {
             let unit = viewModel.units[indexPath.row]
             cell.textLabel?.text = unit.name
 
-            let deleteButton = UIButton(type: .system)
-            deleteButton.setImage(UIImage(systemName: "trash"), for: .normal)
-            deleteButton.tintColor = .systemRed
+            let deleteButton = UIButton(type: .custom)
+            deleteButton.frame = CGRect(x: 0, y: 0, width: 24, height: 24)
+            deleteButton.setImage(UIImage(named: "loca_icon_delete")?.withRenderingMode(.alwaysOriginal), for: .normal)
+            deleteButton.contentMode = .scaleAspectFit
+            deleteButton.imageView?.contentMode = .scaleAspectFit
             deleteButton.tag = indexPath.row
             deleteButton.addTarget(self, action: #selector(deleteTapped(_:)), for: .touchUpInside)
             cell.accessoryView = deleteButton

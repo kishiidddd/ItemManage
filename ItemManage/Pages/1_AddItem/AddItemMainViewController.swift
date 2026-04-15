@@ -81,7 +81,7 @@ class AddItemMainViewController: UIViewController {
     }
     
     private func setupUI() {
-        view.backgroundColor = .white
+        view.backgroundColor = .lightGrayBgColor
         view.addSubview(homeTopView)
         view.addSubview(grayBg)
         

@@ -126,7 +126,7 @@ class RemindViewController: UIViewController {
     
     // MARK: - Setup
     private func setupUI() {
-        view.backgroundColor = .white
+        view.backgroundColor = .lightGrayBgColor
         view.addSubview(calendarView)
         
         // 添加过期物品卡片

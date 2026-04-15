@@ -80,7 +80,8 @@ extension Color {
 extension UIColor {
     ///主题红色
     static var themeBlueColor: UIColor {
-        UIColor(hex: "#348AF8")
+        //UIColor(hex: "#348AF8")007aff
+        UIColor(hex: "#007aff")
     }
     
     //主题米黄色

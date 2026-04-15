@@ -16,7 +16,7 @@ class ItemRulesViewController: UIViewController {
 
     private lazy var tableView: UITableView = {
         let tv = UITableView(frame: .zero, style: .insetGrouped)
-        tv.backgroundColor = .systemGroupedBackground
+        tv.backgroundColor = .lightGrayBgColor
         tv.delegate = self
         tv.dataSource = self
         tv.register(UITableViewCell.self, forCellReuseIdentifier: "cell")
@@ -31,7 +31,7 @@ class ItemRulesViewController: UIViewController {
     }
 
     private func setupUI() {
-        view.backgroundColor = .systemGroupedBackground
+        view.backgroundColor = .lightGrayBgColor
         title = "物品规则设置"
 
         view.addSubview(tableView)

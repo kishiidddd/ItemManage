@@ -21,6 +21,22 @@ class ItemDataService {
     private init() {
         print("✅ ItemDataService initialized (Backend: \(ServerConfiguration.apiBaseURLString))")
     }
+
+    // MARK: - 账号
+
+    /// 服务端删除当前用户及关联数据；成功后客户端应 `AuthSession.clear()` 并 `ItemRepository.clearLocalCache()`
+    func deleteAccount(completion: @escaping (Result<Void, Error>) -> Void) {
+        ItemAPIClient.shared.perform(path: "auth/me", method: "DELETE") { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .failure(let e):
+                    completion(.failure(e))
+                case .success:
+                    completion(.success(()))
+                }
+            }
+        }
+    }
     
     // MARK: - 全量加载（供 ItemRepository）
     
@@ -245,6 +261,30 @@ class ItemDataService {
                         return
                     }
                     completion(.success(model))
+                }
+            }
+        }
+    }
+
+    func deleteCategory(id: String, completion: @escaping (Result<Bool, Error>) -> Void) {
+        ItemAPIClient.shared.perform(path: "categories/\(id)", method: "DELETE") { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .failure(let e): completion(.failure(e))
+                case .success:
+                    completion(.success(true))
+                }
+            }
+        }
+    }
+
+    func deleteUnit(id: String, completion: @escaping (Result<Bool, Error>) -> Void) {
+        ItemAPIClient.shared.perform(path: "units/\(id)", method: "DELETE") { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .failure(let e): completion(.failure(e))
+                case .success:
+                    completion(.success(true))
                 }
             }
         }

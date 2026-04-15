@@ -50,6 +50,16 @@ class ItemRepository: ObservableObject {
             }
         }
     }
+
+    /// 登出或注销后清空内存缓存（未登录时拉取全量会失败，不能保留上一账号数据）
+    func clearLocalCache() {
+        allItems = []
+        categories = []
+        units = []
+        primaryLocations = []
+        secondaryLocations = []
+        buildIndexes()
+    }
     
     /// 新建分类（写入服务端并刷新全量缓存）
     func createCategory(name: String, completion: @escaping (Result<Void, Error>) -> Void) {
@@ -68,6 +78,34 @@ class ItemRepository: ObservableObject {
     /// 新建单位（写入服务端并刷新全量缓存）
     func createUnit(name: String, completion: @escaping (Result<Void, Error>) -> Void) {
         ItemDataService.shared.createUnit(name: name) { [weak self] result in
+            switch result {
+            case .failure(let e):
+                DispatchQueue.main.async { completion(.failure(e)) }
+            case .success:
+                self?.loadData {
+                    DispatchQueue.main.async { completion(.success(())) }
+                }
+            }
+        }
+    }
+
+    /// 删除分类（服务端删除成功后刷新全量缓存）
+    func deleteCategory(id: String, completion: @escaping (Result<Void, Error>) -> Void) {
+        ItemDataService.shared.deleteCategory(id: id) { [weak self] result in
+            switch result {
+            case .failure(let e):
+                DispatchQueue.main.async { completion(.failure(e)) }
+            case .success:
+                self?.loadData {
+                    DispatchQueue.main.async { completion(.success(())) }
+                }
+            }
+        }
+    }
+
+    /// 删除单位（服务端删除成功后刷新全量缓存）
+    func deleteUnit(id: String, completion: @escaping (Result<Void, Error>) -> Void) {
+        ItemDataService.shared.deleteUnit(id: id) { [weak self] result in
             switch result {
             case .failure(let e):
                 DispatchQueue.main.async { completion(.failure(e)) }

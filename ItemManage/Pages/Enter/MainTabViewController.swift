@@ -14,7 +14,7 @@ class FWMainTabViewController: UITabBarController {
         super.viewDidLoad()
 //        self.delegate = self
         setupViewControllers()
-        view.backgroundColor = .white
+        view.backgroundColor = .lightGrayBgColor
         tabBar.tintColor = .themeBlueColor // 选中 icon 和文字颜色
         tabBar.unselectedItemTintColor = UIColor(hex: "#999999") // 未选中颜色，可自定义
     }

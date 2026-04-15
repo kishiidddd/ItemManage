@@ -82,14 +82,33 @@ final class ItemRulesViewModel: ObservableObject {
         }
     }
 
-    /// 仅本地删除（与服务端删除未对接时与原先行为一致）
     func deleteUnit(at index: Int) {
         guard units.indices.contains(index) else { return }
-        units.remove(at: index)
+        let id = units[index].id
+        repository.deleteUnit(id: id) { [weak self] result in
+            guard let self = self else { return }
+            switch result {
+            case .success:
+                self.units = self.repository.units
+                self.categories = self.repository.categories
+            case .failure(let error):
+                self.errorMessage = error.localizedDescription
+            }
+        }
     }
 
     func deleteCategory(at index: Int) {
         guard categories.indices.contains(index) else { return }
-        categories.remove(at: index)
+        let id = categories[index].id
+        repository.deleteCategory(id: id) { [weak self] result in
+            guard let self = self else { return }
+            switch result {
+            case .success:
+                self.categories = self.repository.categories
+                self.units = self.repository.units
+            case .failure(let error):
+                self.errorMessage = error.localizedDescription
+            }
+        }
     }
 }

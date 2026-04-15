@@ -33,7 +33,7 @@ final class StorageGuideFavoritesViewController: UIViewController {
         super.viewDidLoad()
         title = "我的收藏"
         navigationItem.largeTitleDisplayMode = .never
-        view.backgroundColor = .systemGroupedBackground
+        view.backgroundColor = .lightGrayBgColor
 
         view.addSubview(tableView)
         view.addSubview(emptyLabel)

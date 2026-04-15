@@ -14,7 +14,7 @@ class AccManageViewController: UIViewController {
     private let scrollView: UIScrollView = {
         let sv = UIScrollView()
         sv.showsVerticalScrollIndicator = false
-        sv.backgroundColor = .clear
+        sv.backgroundColor = .lightGrayBgColor
         return sv
     }()
     
@@ -91,7 +91,7 @@ class AccManageViewController: UIViewController {
     
     // MARK: - Setup
     private func setupUI() {
-        view.backgroundColor = .systemGroupedBackground
+        view.backgroundColor = .lightGrayBgColor
         title = "账号管理"
         
         view.addSubview(scrollView)
@@ -142,23 +142,21 @@ class AccManageViewController: UIViewController {
             make.edges.equalTo(logoutAccountCard)
         }
         
-        // 提示标签约束
+        // 提示标签（注销说明）
         warningLabel.snp.makeConstraints { make in
             make.top.equalTo(logoutAccountCard.snp.bottom).offset(16)
             make.left.equalTo(contentView).offset(20)
             make.right.equalTo(contentView).offset(-20)
-            make.bottom.equalTo(contentView).offset(-30)
         }
-        
-        // 退出按钮约束
+
+        // 退出按钮必须约束在 contentView 内并撑开底部，否则相对于外层 view 定位会落在滚动区域外/被裁切，导致点击无响应
         logoutButton.snp.makeConstraints { make in
-            make.bottom.equalTo(view).offset(-32)
+            make.top.equalTo(warningLabel.snp.bottom).offset(24)
             make.left.equalTo(contentView).offset(20)
             make.right.equalTo(contentView).offset(-20)
             make.height.equalTo(50)
+            make.bottom.equalTo(contentView).offset(-30)
         }
-        
-
     }
     
     // MARK: - Actions
@@ -199,32 +197,50 @@ class AccManageViewController: UIViewController {
     }
     
     // MARK: - Private Methods
-    private func performLogoutAccount() {
-        // 这里执行注销账号的逻辑
-        // 比如调用API、清除本地数据等
-        
-        // 显示成功提示（可选）
 
-    }
-    
-    private func performLogout() {
-        // 这里执行退出登录的逻辑
-        // 比如清除用户信息、跳转到登录页等
-        
-        // 清除本地登录态（含 token）
-        AuthSession.shared.clear()
-        ItemRepository.shared.loadData()
-        
-        // 返回到登录页或首页
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            // 跳转到登录页
-//            let loginVC = LoginViewController()
-//            loginVC.modalPresentationStyle = .fullScreen
-//            self.present(loginVC, animated: true)
-            
-            // 或者如果有导航控制器，可以 pop 到根视图
-            // self.navigationController?.popToRootViewController(animated: true)
+    private func performLogoutAccount() {
+        guard AuthSession.shared.isLoggedIn else {
+            presentMessageAlert(title: "提示", message: "请先登录")
+            return
         }
+        view.isUserInteractionEnabled = false
+        ItemDataService.shared.deleteAccount { [weak self] result in
+            guard let self = self else { return }
+            self.view.isUserInteractionEnabled = true
+            switch result {
+            case .failure(let error):
+                self.presentMessageAlert(title: "注销失败", message: error.localizedDescription)
+            case .success:
+                AuthSession.shared.clear()
+                ItemRepository.shared.clearLocalCache()
+                ItemRepository.shared.loadData()
+                self.presentMessageAlert(title: "提示", message: "账号已注销") { [weak self] in
+                    self?.popToMineTabRoot()
+                }
+            }
+        }
+    }
+
+    private func performLogout() {
+        AuthSession.shared.clear()
+        ItemRepository.shared.clearLocalCache()
+        ItemRepository.shared.loadData()
+        popToMineTabRoot()
+    }
+
+    /// 「我的」页所在导航栈回到根（`SettingViewController`），以便 `viewWillAppear` 刷新登录态
+    private func popToMineTabRoot() {
+        navigationController?.popToRootViewController(animated: true)
+    }
+
+    private func presentMessageAlert(title: String, message: String, onOK: (() -> Void)? = nil) {
+        showCustomAlert(
+            title: title,
+            subtitle: message,
+            cancelTitle: nil,
+            confirmTitle: "确定",
+            onConfirm: onOK
+        )
     }
 }
 

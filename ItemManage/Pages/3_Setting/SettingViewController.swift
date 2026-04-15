@@ -31,7 +31,7 @@ class SettingViewController: UIViewController {
     private let scrollView: UIScrollView = {
         let sv = UIScrollView()
         sv.showsVerticalScrollIndicator = false
-        sv.backgroundColor = .clear
+        sv.backgroundColor = .lightGrayBgColor
         return sv
     }()
     
@@ -45,19 +45,6 @@ class SettingViewController: UIViewController {
         view.layer.shadowOffset = CGSize(width: 0, height: 2)
         view.layer.shadowRadius = 8
         return view
-    }()
-    
-    private lazy var avatarImageView: UIImageView = {
-        let iv = UIImageView()
-        iv.image = UIImage(named: "setting_avatar") ?? UIImage(systemName: "person.circle.fill")
-        iv.contentMode = .scaleAspectFill
-        iv.clipsToBounds = true
-        iv.layer.cornerRadius = 30
-        iv.layer.borderWidth = 2
-        iv.layer.borderColor = UIColor.systemBlue.cgColor
-        iv.backgroundColor = .systemGray6
-        iv.tintColor = .systemBlue
-        return iv
     }()
     
     private lazy var loginButton: UIButton = {
@@ -196,6 +183,33 @@ class SettingViewController: UIViewController {
         button.addTarget(self, action: #selector(categoryButtonTapped), for: .touchUpInside)
         return button
     }()
+
+    private lazy var accountManageCardView: UIView = makeCardView()
+
+    private lazy var accountManageTitleLabel: UILabel = {
+        let label = UILabel()
+        label.text = "退出/注销账号"
+        label.font = .systemFont(ofSize: 16, weight: .medium)
+        label.textColor = .black
+        return label
+    }()
+
+    private lazy var accountManageIconImageView: UIImageView = {
+        let iv = UIImageView()
+        iv.image = UIImage(systemName: "person.crop.circle")
+        iv.contentMode = .scaleAspectFit
+        iv.tintColor = .systemBlue//.label
+        return iv
+    }()
+
+    private lazy var accountManageArrowImageView: UIImageView = makeArrowImageView()
+
+    private lazy var accountManageButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.backgroundColor = .clear
+        button.addTarget(self, action: #selector(accountManageButtonTapped), for: .touchUpInside)
+        return button
+    }()
     
     // MARK: - 设置选项
     private lazy var settingsStackView: UIStackView = {
@@ -225,7 +239,7 @@ class SettingViewController: UIViewController {
     
     // MARK: - Setup UI
     private func setupUI() {
-        view.backgroundColor = .white
+        view.backgroundColor = .lightGrayBgColor
         
         // 添加背景图
         view.addSubview(backgroundImageView)
@@ -236,7 +250,6 @@ class SettingViewController: UIViewController {
         
         // 添加登录卡片
         contentView.addSubview(loginCardView)
-        loginCardView.addSubview(avatarImageView)
         loginCardView.addSubview(userInfoStackView)
         loginCardView.addSubview(loginCardTapButton)
         
@@ -268,6 +281,12 @@ class SettingViewController: UIViewController {
         categoryCardView.addSubview(categoryTitleLabel)
         categoryCardView.addSubview(categoryArrowImageView)
         categoryCardView.addSubview(categoryButton)
+
+        contentView.addSubview(accountManageCardView)
+        accountManageCardView.addSubview(accountManageIconImageView)
+        accountManageCardView.addSubview(accountManageTitleLabel)
+        accountManageCardView.addSubview(accountManageArrowImageView)
+        accountManageCardView.addSubview(accountManageButton)
     }
     
     private func createSettingItems() {
@@ -355,19 +374,13 @@ class SettingViewController: UIViewController {
             make.top.equalTo(contentView).offset(100)
             make.left.equalTo(contentView).offset(20)
             make.right.equalTo(contentView).offset(-20)
-            make.height.equalTo(100)
+            make.height.equalTo(88)
         }
-        
-        avatarImageView.snp.makeConstraints { make in
-            make.left.equalTo(loginCardView).offset(16)
-            make.centerY.equalTo(loginCardView)
-            make.width.height.equalTo(60)
-        }
-        
+
         userInfoStackView.snp.makeConstraints { make in
-            make.left.equalTo(avatarImageView.snp.right).offset(16)
+            make.left.equalTo(loginCardView).offset(20)
             make.centerY.equalTo(loginCardView)
-            make.right.equalTo(loginCardView).offset(-16)
+            make.right.equalTo(loginCardView).offset(-20)
         }
         loginCardTapButton.snp.makeConstraints { make in
             make.edges.equalToSuperview()
@@ -422,8 +435,6 @@ class SettingViewController: UIViewController {
         categoryCardView.snp.makeConstraints { make in
             make.top.equalTo(unitCardView.snp.bottom).offset(14)
             make.left.right.height.equalTo(locationCardView)
-            // 作为页面最后一个模块时，兜底撑开 scrollView 的 contentSize
-            make.bottom.equalTo(contentView).offset(-30)
         }
         categoryIconImageView.snp.makeConstraints { make in
             make.left.equalTo(categoryCardView).offset(16)
@@ -442,8 +453,31 @@ class SettingViewController: UIViewController {
         categoryButton.snp.makeConstraints { make in
             make.edges.equalTo(categoryCardView)
         }
+
+        accountManageCardView.snp.makeConstraints { make in
+            make.top.equalTo(categoryCardView.snp.bottom).offset(14)
+            make.left.right.height.equalTo(locationCardView)
+            make.bottom.equalTo(contentView).offset(-30)
+        }
+        accountManageIconImageView.snp.makeConstraints { make in
+            make.left.equalTo(accountManageCardView).offset(16)
+            make.centerY.equalTo(accountManageCardView)
+            make.width.height.equalTo(24)
+        }
+        accountManageTitleLabel.snp.makeConstraints { make in
+            make.left.equalTo(accountManageIconImageView.snp.right).offset(12)
+            make.centerY.equalTo(accountManageCardView)
+        }
+        accountManageArrowImageView.snp.makeConstraints { make in
+            make.right.equalTo(accountManageCardView).offset(-16)
+            make.centerY.equalTo(accountManageCardView)
+            make.width.height.equalTo(16)
+        }
+        accountManageButton.snp.makeConstraints { make in
+            make.edges.equalTo(accountManageCardView)
+        }
         
-        // 设置选项已移除（因此 contentView 的 bottom 由 rulesCardView 约束撑开）
+        // 设置选项已移除（因此 contentView 的 bottom 由规则卡片 + 账号入口撑开）
     }
     
     // MARK: - Data Loading
@@ -453,7 +487,7 @@ class SettingViewController: UIViewController {
         
         if isLoggedIn {
             let savedUsername = AuthSession.shared.username ?? "用户"
-            usernameLabel.text = savedUsername
+            usernameLabel.text = "用户：" + savedUsername
             usernameLabel.isHidden = false
             loginButton.isHidden = true
         } else {
@@ -493,6 +527,12 @@ class SettingViewController: UIViewController {
 
     @objc private func categoryButtonTapped() {
         let vc = CategoryManageViewController()
+        vc.hidesBottomBarWhenPushed = true
+        navigationController?.pushViewController(vc, animated: true)
+    }
+
+    @objc private func accountManageButtonTapped() {
+        let vc = AccManageViewController()
         vc.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(vc, animated: true)
     }

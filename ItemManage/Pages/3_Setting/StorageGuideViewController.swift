@@ -11,7 +11,7 @@ final class StorageGuideViewController: UIViewController {
     private let tableView: UITableView = {
         let t = UITableView(frame: .zero, style: .insetGrouped)
         t.separatorStyle = .none
-        t.backgroundColor = .systemGroupedBackground
+        t.backgroundColor = .lightGrayBgColor
         t.rowHeight = UITableView.automaticDimension
         t.estimatedRowHeight = 160
         return t
@@ -28,7 +28,7 @@ final class StorageGuideViewController: UIViewController {
         super.viewDidLoad()
         navigationItem.title = nil
         navigationItem.largeTitleDisplayMode = .never
-        view.backgroundColor = .systemGroupedBackground
+        view.backgroundColor = .lightGrayBgColor
 
         tableView.dataSource = self
         tableView.delegate = self

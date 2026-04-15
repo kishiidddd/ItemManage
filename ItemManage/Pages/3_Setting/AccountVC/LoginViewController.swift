@@ -138,7 +138,7 @@ class LoginViewController: UIViewController {
     
     // MARK: - Setup
     private func setupUI() {
-        view.backgroundColor = .white
+        view.backgroundColor = .lightGrayBgColor
         
         view.addSubview(backgroundImageView)
         view.addSubview(titleLabel)
@@ -274,9 +274,12 @@ class LoginViewController: UIViewController {
     }
     
     private func showAlert(message: String) {
-        let alert = UIAlertController(title: "提示", message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "确定", style: .default))
-        present(alert, animated: true)
+        showCustomAlert(
+            title: "提示",
+            subtitle: message,
+            cancelTitle: nil,
+            confirmTitle: "确定"
+        )
     }
 
     private func parseAuthPayload(_ json: Any) -> (token: String, userId: String, username: String)? {

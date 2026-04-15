@@ -12,7 +12,7 @@ import SnapKit
 class BarcodeScanViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .white
+        view.backgroundColor = .lightGrayBgColor
         title = "扫描条码"
     }
 }

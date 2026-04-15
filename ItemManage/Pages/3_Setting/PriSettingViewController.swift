@@ -10,7 +10,7 @@ import UIKit
 class PriSettingViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .white
+        view.backgroundColor = .lightGrayBgColor
         title = "隐私设置"
     }
 }
