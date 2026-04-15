@@ -12,7 +12,6 @@ import Kingfisher
 protocol PhotosViewDelegate: AnyObject {
     func photosViewDidTapAdd(_ photosView: PhotosView)
     func photosView(_ photosView: PhotosView, didDeletePhotoAt index: Int)
-    func photosView(_ photosView: PhotosView, didMovePhoto fromIndex: Int, toIndex: Int)
 }
 
 class PhotosView: UIView {
@@ -21,12 +20,6 @@ class PhotosView: UIView {
     weak var delegate: PhotosViewDelegate?
     private var photos: [PhotoModel] = []
     private var canAddMore: Bool = true
-    
-    // 长按拖动相关
-    private var longPressGesture: UILongPressGestureRecognizer?
-    private var isReordering = false
-    private var draggedView: UIView?
-    private var dragIndexPath: IndexPath?
     
     // MARK: - UI Elements
     private let titleLabel: UILabel = {
@@ -60,20 +53,11 @@ class PhotosView: UIView {
         return cv
     }()
     
-    private let hintLabel: UILabel = {
-        let label = UILabel()
-        label.text = "长按照片可以拖动排序"
-        label.font = .systemFont(ofSize: 12)
-        label.textColor = .systemGray2
-        return label
-    }()
-    
     // MARK: - Init
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupUI()
         setupConstraints()
-        setupLongPressGesture()
     }
     
     required init?(coder: NSCoder) {
@@ -86,7 +70,6 @@ class PhotosView: UIView {
         addSubview(titleLabel)
         addSubview(countLabel)
         addSubview(collectionView)
-        addSubview(hintLabel)
     }
     
     private func setupConstraints() {
@@ -104,20 +87,8 @@ class PhotosView: UIView {
             make.top.equalTo(titleLabel.snp.bottom).offset(12)
             make.leading.trailing.equalToSuperview()
             make.height.equalTo(100)
-        }
-        
-        hintLabel.snp.makeConstraints { make in
-            make.top.equalTo(collectionView.snp.bottom).offset(8)
-            make.leading.equalToSuperview()
             make.bottom.equalToSuperview().offset(-8)
         }
-    }
-    
-    private func setupLongPressGesture() {
-        let longPress = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPress(_:)))
-        longPress.minimumPressDuration = 0.5
-        collectionView.addGestureRecognizer(longPress)
-        self.longPressGesture = longPress
     }
     
     // MARK: - Public Methods
@@ -128,32 +99,6 @@ class PhotosView: UIView {
         collectionView.reloadData()
     }
     
-    // MARK: - Actions
-    @objc private func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
-        let location = gesture.location(in: collectionView)
-        
-        switch gesture.state {
-        case .began:
-            guard let indexPath = collectionView.indexPathForItem(at: location),
-                  indexPath.item < photos.count else {
-                return
-            }
-            
-            isReordering = true
-            collectionView.beginInteractiveMovementForItem(at: indexPath)
-            
-        case .changed:
-            collectionView.updateInteractiveMovementTargetPosition(location)
-            
-        case .ended:
-            isReordering = false
-            collectionView.endInteractiveMovement()
-            
-        default:
-            isReordering = false
-            collectionView.cancelInteractiveMovement()
-        }
-    }
 }
 
 // MARK: - UICollectionViewDataSource
@@ -176,18 +121,6 @@ extension PhotosView: UICollectionViewDataSource {
         return cell
     }
     
-    func collectionView(_ collectionView: UICollectionView, canMoveItemAt indexPath: IndexPath) -> Bool {
-        return indexPath.item < photos.count
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, moveItemAt sourceIndexPath: IndexPath, to destinationIndexPath: IndexPath) {
-        guard sourceIndexPath.item < photos.count,
-              destinationIndexPath.item < photos.count else {
-            return
-        }
-        
-        delegate?.photosView(self, didMovePhoto: sourceIndexPath.item, toIndex: destinationIndexPath.item)
-    }
 }
 
 // MARK: - UICollectionViewDelegate
@@ -201,12 +134,6 @@ extension PhotosView: UICollectionViewDelegate {
         }
     }
     
-    func collectionView(_ collectionView: UICollectionView, targetIndexPathForMoveFromItemAt originalIndexPath: IndexPath, toProposedIndexPath proposedIndexPath: IndexPath) -> IndexPath {
-        if proposedIndexPath.item >= photos.count {
-            return IndexPath(item: photos.count - 1, section: 0)
-        }
-        return proposedIndexPath
-    }
 }
 
 // MARK: - PhotoCellDelegate

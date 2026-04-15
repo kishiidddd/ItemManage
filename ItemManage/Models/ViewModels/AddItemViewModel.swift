@@ -27,7 +27,7 @@ class AddItemViewModel: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
     @Published var isFormValid: Bool = false
-    
+
     enum DateField {
         case production
         case expiry
@@ -78,7 +78,7 @@ class AddItemViewModel: ObservableObject {
         setupValidation()
         loadDataFromRepository()
     }
-    
+
     // MARK: - Public Methods
     func loadInitialData() {
         // 数据已经在 init 中加载
@@ -127,17 +127,6 @@ class AddItemViewModel: ObservableObject {
     func removePhoto(at index: Int) {
         guard index < photos.count else { return }
         photos.remove(at: index)
-        for (i, p) in photos.enumerated() {
-            p.sortOrder = i
-        }
-    }
-    
-    func movePhoto(from fromIndex: Int, to toIndex: Int) {
-        guard fromIndex != toIndex,
-              fromIndex < photos.count,
-              toIndex < photos.count else { return }
-        let photo = photos.remove(at: fromIndex)
-        photos.insert(photo, at: toIndex)
         for (i, p) in photos.enumerated() {
             p.sortOrder = i
         }

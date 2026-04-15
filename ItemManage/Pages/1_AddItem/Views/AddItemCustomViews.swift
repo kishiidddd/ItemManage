@@ -78,6 +78,9 @@ class SectionView: UIView {
             make.trailing.equalToSuperview().offset(-16)
             make.bottom.equalToSuperview()
         }
+
+        // `footerText` 默认为 nil 时不会触发 didSet，需默认隐藏，避免空白占位
+        footerLabel.isHidden = true
     }
 }
 
@@ -165,7 +168,19 @@ class CustomPickerField: UIControl {
         let label = UILabel()
         label.font = .systemFont(ofSize: 16)
         label.textColor = .label
+        label.setContentHuggingPriority(.required, for: .horizontal)
+        label.setContentCompressionResistancePriority(.required, for: .horizontal)
         return label
+    }()
+
+    /// 标题 + 必填星号（与 `CustomTextField` 一致：星号紧跟标题文字）
+    private let titleStarStack: UIStackView = {
+        let s = UIStackView()
+        s.axis = .horizontal
+        s.spacing = 2
+        s.alignment = .center
+        s.distribution = .fill
+        return s
     }()
     
     private let valueLabel: UILabel = {
@@ -181,6 +196,8 @@ class CustomPickerField: UIControl {
         label.text = "*"
         label.textColor = .systemRed
         label.font = .systemFont(ofSize: 16)
+        label.setContentHuggingPriority(.required, for: .horizontal)
+        label.setContentCompressionResistancePriority(.required, for: .horizontal)
         label.isHidden = true
         return label
     }()
@@ -205,19 +222,15 @@ class CustomPickerField: UIControl {
     private func setupUI() {
         backgroundColor = .clear
         
-        addSubview(titleLabel)
-        addSubview(requiredStar)
+        titleStarStack.addArrangedSubview(titleLabel)
+        titleStarStack.addArrangedSubview(requiredStar)
+        addSubview(titleStarStack)
         addSubview(valueLabel)
         addSubview(arrowImageView)
         
-        titleLabel.snp.makeConstraints { make in
+        titleStarStack.snp.makeConstraints { make in
             make.top.bottom.equalToSuperview().inset(8)
             make.leading.equalToSuperview()
-        }
-        
-        requiredStar.snp.makeConstraints { make in
-            make.centerY.equalTo(titleLabel)
-            make.leading.equalTo(titleLabel.snp.trailing).offset(2)
         }
         
         arrowImageView.snp.makeConstraints { make in
@@ -228,7 +241,7 @@ class CustomPickerField: UIControl {
         
         valueLabel.snp.makeConstraints { make in
             make.top.bottom.equalToSuperview().inset(8)
-            make.leading.equalTo(requiredStar.snp.trailing).offset(8)
+            make.leading.equalTo(titleStarStack.snp.trailing).offset(8)
             make.trailing.equalTo(arrowImageView.snp.leading).offset(-8)
         }
     }
@@ -246,7 +259,7 @@ class CustomPickerField: UIControl {
     }
 }
 
-// MARK: - Custom Stepper Field
+// MARK: - Custom Stepper Field（左侧减号、中间数量、右侧加号）
 class CustomStepperField: UIView {
     
     private let titleLabel: UILabel = {
@@ -265,12 +278,25 @@ class CustomStepperField: UIView {
         label.adjustsFontSizeToFitWidth = true
         return label
     }()
-    
-    private let stepper: UIStepper = {
-        let stepper = UIStepper()
-        stepper.stepValue = 1
-        return stepper
+
+    private let minusButton: UIButton = {
+        let b = UIButton(type: .system)
+        b.setTitle("−", for: .normal)
+        b.titleLabel?.font = .systemFont(ofSize: 22, weight: .medium)
+        b.accessibilityLabel = "减少数量"
+        return b
     }()
+
+    private let plusButton: UIButton = {
+        let b = UIButton(type: .system)
+        b.setTitle("+", for: .normal)
+        b.titleLabel?.font = .systemFont(ofSize: 22, weight: .medium)
+        b.accessibilityLabel = "增加数量"
+        return b
+    }()
+
+    private var minValue: Int = 1
+    private var maxValue: Int = 9999
     
     var onValueChanged: ((Int) -> Void)?
     
@@ -287,44 +313,70 @@ class CustomStepperField: UIView {
         backgroundColor = .clear
         
         addSubview(titleLabel)
+        addSubview(minusButton)
         addSubview(valueLabel)
-        addSubview(stepper)
+        addSubview(plusButton)
         
         titleLabel.snp.makeConstraints { make in
             make.top.bottom.equalToSuperview().inset(8)
             make.leading.equalToSuperview()
+            make.trailing.lessThanOrEqualTo(minusButton.snp.leading).offset(-12)
         }
         
-        stepper.snp.makeConstraints { make in
+        plusButton.snp.makeConstraints { make in
             make.centerY.equalToSuperview()
             make.trailing.equalToSuperview()
+            make.width.height.equalTo(36)
         }
-        
+
         valueLabel.snp.makeConstraints { make in
             make.centerY.equalToSuperview()
-            make.trailing.equalTo(stepper.snp.leading).offset(-12)
-            make.width.greaterThanOrEqualTo(50)
+            make.trailing.equalTo(plusButton.snp.leading).offset(-4)
+            make.width.greaterThanOrEqualTo(44)
+        }
+
+        minusButton.snp.makeConstraints { make in
+            make.centerY.equalToSuperview()
+            make.trailing.equalTo(valueLabel.snp.leading).offset(-4)
+            make.width.height.equalTo(36)
         }
         
-        stepper.addTarget(self, action: #selector(stepperValueChanged), for: .valueChanged)
+        minusButton.addTarget(self, action: #selector(minusTapped), for: .touchUpInside)
+        plusButton.addTarget(self, action: #selector(plusTapped), for: .touchUpInside)
     }
     
     func configure(title: String, value: Int, minValue: Int, maxValue: Int) {
         titleLabel.text = title
-        stepper.minimumValue = Double(minValue)
-        stepper.maximumValue = Double(maxValue)
+        self.minValue = minValue
+        self.maxValue = maxValue
         setValue(value)
     }
     
     func setValue(_ value: Int) {
-        stepper.value = Double(value)
-        valueLabel.text = "\(value)"
+        let clamped = min(max(value, minValue), maxValue)
+        valueLabel.text = "\(clamped)"
+        minusButton.isEnabled = clamped > minValue
+        plusButton.isEnabled = clamped < maxValue
+    }
+
+    private func currentValue() -> Int {
+        Int(valueLabel.text ?? "") ?? minValue
+    }
+
+    private func applyChange(_ newValue: Int) {
+        let clamped = min(max(newValue, minValue), maxValue)
+        valueLabel.text = "\(clamped)"
+        minusButton.isEnabled = clamped > minValue
+        plusButton.isEnabled = clamped < maxValue
+        onValueChanged?(clamped)
     }
     
-    @objc private func stepperValueChanged() {
-        let value = Int(stepper.value)
-        valueLabel.text = "\(value)"
-        onValueChanged?(value)
+    @objc private func minusTapped() {
+        applyChange(currentValue() - 1)
+    }
+
+    @objc private func plusTapped() {
+        applyChange(currentValue() + 1)
     }
 }
 
@@ -533,7 +585,6 @@ class CustomTextView: UIView {
         textView.text = text
         placeholderLabel.isHidden = !text.isEmpty
         updateCountLabel()
-        onTextChanged?(text)
     }
     
     func getText() -> String {

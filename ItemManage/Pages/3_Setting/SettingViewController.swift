@@ -382,7 +382,7 @@ class SettingViewController: UIViewController {
         locationIconImageView.snp.makeConstraints { make in
             make.left.equalTo(locationCardView).offset(16)
             make.centerY.equalTo(locationCardView)
-            make.width.height.equalTo(24)
+            make.width.height.equalTo(20)
         }
         locationTitleLabel.snp.makeConstraints { make in
             make.left.equalTo(locationIconImageView.snp.right).offset(12)
@@ -404,7 +404,7 @@ class SettingViewController: UIViewController {
         unitIconImageView.snp.makeConstraints { make in
             make.left.equalTo(unitCardView).offset(16)
             make.centerY.equalTo(unitCardView)
-            make.width.height.equalTo(24)
+            make.width.height.equalTo(20)
         }
         unitTitleLabel.snp.makeConstraints { make in
             make.left.equalTo(unitIconImageView.snp.right).offset(12)
@@ -428,7 +428,7 @@ class SettingViewController: UIViewController {
         categoryIconImageView.snp.makeConstraints { make in
             make.left.equalTo(categoryCardView).offset(16)
             make.centerY.equalTo(categoryCardView)
-            make.width.height.equalTo(24)
+            make.width.height.equalTo(20)
         }
         categoryTitleLabel.snp.makeConstraints { make in
             make.left.equalTo(categoryIconImageView.snp.right).offset(12)
