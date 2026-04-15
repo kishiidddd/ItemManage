@@ -12,7 +12,6 @@ class FWMainTabViewController: UITabBarController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-//        self.delegate = self
         setupViewControllers()
         view.backgroundColor = .lightGrayBgColor
         tabBar.tintColor = .themeBlueColor // 选中 icon 和文字颜色

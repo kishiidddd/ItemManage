@@ -77,7 +77,7 @@ class LocationCell: UITableViewCell {
         
         let buttonStack = UIStackView()
         buttonStack.axis = .horizontal
-        buttonStack.spacing = 12
+        buttonStack.spacing = 0
         buttonStack.distribution = .fillEqually
         buttonStack.addArrangedSubview(editButton)
         buttonStack.addArrangedSubview(deleteButton)
@@ -93,13 +93,13 @@ class LocationCell: UITableViewCell {
         textStack.snp.makeConstraints { make in
             make.left.equalTo(selectionIndicator.snp.right).offset(12)
             make.centerY.equalToSuperview()
-            make.right.lessThanOrEqualTo(buttonStack.snp.left).offset(-12)
+            make.right.lessThanOrEqualTo(buttonStack.snp.left)
         }
         
         buttonStack.snp.makeConstraints { make in
-            make.right.equalToSuperview().offset(-16)
+            make.right.equalToSuperview().offset(-4)
             make.centerY.equalToSuperview()
-            make.width.equalTo(80)
+            make.width.equalTo(60)
             make.height.equalTo(36)
         }
     }
