@@ -71,16 +71,7 @@ class AccManageViewController: UIViewController {
         return button
     }()
     
-    // 提示标签
-    private let warningLabel: UILabel = {
-        let label = UILabel()
-        label.text = "注销账号后将无法恢复，请谨慎操作"
-        label.font = .systemFont(ofSize: 12)
-        label.textColor = .gray
-        label.textAlignment = .center
-        label.numberOfLines = 0
-        return label
-    }()
+
     
     // MARK: - Lifecycle
     override func viewDidLoad() {
@@ -102,7 +93,6 @@ class AccManageViewController: UIViewController {
         logoutAccountCard.addSubview(logoutAccountLabel)
         logoutAccountCard.addSubview(logoutAccountArrow)
         logoutAccountCard.addSubview(logoutAccountButton)
-        contentView.addSubview(warningLabel)//提示
         
         // 添加退出按钮
         contentView.addSubview(logoutButton)
@@ -141,17 +131,10 @@ class AccManageViewController: UIViewController {
         logoutAccountButton.snp.makeConstraints { make in
             make.edges.equalTo(logoutAccountCard)
         }
-        
-        // 提示标签（注销说明）
-        warningLabel.snp.makeConstraints { make in
-            make.top.equalTo(logoutAccountCard.snp.bottom).offset(16)
-            make.left.equalTo(contentView).offset(20)
-            make.right.equalTo(contentView).offset(-20)
-        }
 
         // 退出按钮必须约束在 contentView 内并撑开底部，否则相对于外层 view 定位会落在滚动区域外/被裁切，导致点击无响应
         logoutButton.snp.makeConstraints { make in
-            make.top.equalTo(warningLabel.snp.bottom).offset(24)
+            make.top.equalTo(logoutAccountCard.snp.bottom).offset(44)
             make.left.equalTo(contentView).offset(20)
             make.right.equalTo(contentView).offset(-20)
             make.height.equalTo(50)
@@ -165,7 +148,7 @@ class AccManageViewController: UIViewController {
         
         showCustomAlert(
             title: "注销账号",
-            subtitle: "注销后，您的所有数据将被永久删除，且无法恢复。确定要继续吗？",
+            subtitle: "注销后，您的所有数据将被永久删除。确定要注销吗？",
             cancelTitle: "再想想",
             confirmTitle: "确认注销",
             onCancel: {

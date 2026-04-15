@@ -63,7 +63,7 @@ class HomeMessageScrollView: UIView {
     private lazy var guideSpotlightCard: UIView = {
         let card = UIView()
         card.backgroundColor = .secondarySystemGroupedBackground
-        card.layer.cornerRadius = 22
+        card.layer.cornerRadius = 16
         card.layer.masksToBounds = true
 
         let icon = UIImageView(image: UIImage(named: "icon_tips"))
@@ -123,7 +123,7 @@ class HomeMessageScrollView: UIView {
     private lazy var expiredCard: UIView = {
         let card = UIView()
         card.backgroundColor = .secondarySystemGroupedBackground
-        card.layer.cornerRadius = 22
+        card.layer.cornerRadius = 16
         card.layer.masksToBounds = true
 
         let icon = UIImageView(image: UIImage(named: "icon_expired"))
@@ -181,7 +181,7 @@ class HomeMessageScrollView: UIView {
     private lazy var soonCard: UIView = {
         let card = UIView()
         card.backgroundColor = .secondarySystemGroupedBackground
-        card.layer.cornerRadius = 22
+        card.layer.cornerRadius = 16
         card.layer.masksToBounds = true
 
         let icon = UIImageView(image: UIImage(named: "icon_will_expired"))
@@ -259,7 +259,7 @@ class HomeMessageScrollView: UIView {
         expiredCountLabel.text = "\(expired.count)"
         soonCountLabel.text = "\(soon.count)"
 
-        let guideKey = StorageGuideItem.spotlight(in: StorageGuideRuntimeData.displayItems)?.title ?? ""
+        let guideKey = GuideCollectItem.spotlight(in: GuideCollectRuntimeData.displayItems)?.title ?? ""
         let expSig = itemSignature(expired)
         let soonSig = itemSignature(soon)
 
@@ -280,8 +280,8 @@ class HomeMessageScrollView: UIView {
 
     /// 仅刷新贴士文案（兼容原调用）
     func updateGuideSpotlight() {
-        let items = StorageGuideRuntimeData.displayItems
-        if let spot = StorageGuideItem.spotlight(in: items) {
+        let items = GuideCollectRuntimeData.displayItems
+        if let spot = GuideCollectItem.spotlight(in: items) {
             guideSpotlightTitleLabel.text = spot.title
             guideSpotlightTitleLabel.textColor = .label
         } else {

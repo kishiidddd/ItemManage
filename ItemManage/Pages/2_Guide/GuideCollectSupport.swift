@@ -5,7 +5,7 @@
 
 import Foundation
 
-struct StorageGuideItem: Codable, Equatable {
+struct GuideCollectItem: Codable, Equatable {
     let title: String
     let body: String
     /// 首页 / 指南页顶部主推；未返回该字段时视为 false
@@ -18,44 +18,44 @@ struct StorageGuideItem: Codable, Equatable {
     }
 
     /// 第一个 `showInMain == true` 的条目，否则取列表第一条
-    static func spotlight(in items: [StorageGuideItem]) -> StorageGuideItem? {
+    static func spotlight(in items: [GuideCollectItem]) -> GuideCollectItem? {
         guard let first = items.first else { return nil }
         return items.first { $0.showInMain } ?? first
     }
 }
 
 /// 收藏条目：仅存标题与正文
-struct StorageGuideFavoriteEntry: Codable, Equatable {
+struct GuideCollectEntry: Codable, Equatable {
     let title: String
     let body: String
 }
 
 /// 离线兜底（请求失败且尚未成功拉取过服务端时使用）
-enum StorageGuideCatalog {
-    static let fallbackTips: [StorageGuideItem] = [
-        StorageGuideItem(title: "分区存放", body: "按使用场景划区：厨房、卧室、玄关等；重物放低处，轻物与常用放顺手高度。", showInMain: true),
-        StorageGuideItem(title: "垂直空间", body: "层架、挂钩、门后收纳袋，把墙面和柜内纵向空间用起来。"),
-        StorageGuideItem(title: "透明与标签", body: "密闭盒可贴标签或用手机拍照封面，减少翻找时间。"),
-        StorageGuideItem(title: "进一出一", body: "新购物品入库前，考虑淘汰一件同类，控制总量。"),
-        StorageGuideItem(title: "过期管理", body: "结合本 App 的过期提醒，定期清理食品与耗材，避免积压。")
+enum GuideCollectCatalog {
+    static let fallbackTips: [GuideCollectItem] = [
+        GuideCollectItem(title: "分区存放", body: "按使用场景划区：厨房、卧室、玄关等；重物放低处，轻物与常用放顺手高度。", showInMain: true),
+        GuideCollectItem(title: "垂直空间", body: "层架、挂钩、门后收纳袋，把墙面和柜内纵向空间用起来。"),
+        GuideCollectItem(title: "透明与标签", body: "密闭盒可贴标签或用手机拍照封面，减少翻找时间。"),
+        GuideCollectItem(title: "进一出一", body: "新购物品入库前，考虑淘汰一件同类，控制总量。"),
+        GuideCollectItem(title: "过期管理", body: "结合本 App 的过期提醒，定期清理食品与耗材，避免积压。")
     ]
 }
 
 // MARK: - 当前展示数据（以服务端为准，成功拉取后有几条显示几条）
 
-enum StorageGuideRuntimeData {
+enum GuideCollectRuntimeData {
     private static let lock = NSLock()
     private static var loadedFromServer = false
-    private static var serverItems: [StorageGuideItem] = []
+    private static var serverItems: [GuideCollectItem] = []
 
-    static var displayItems: [StorageGuideItem] {
+    static var displayItems: [GuideCollectItem] {
         lock.lock()
         defer { lock.unlock() }
         if loadedFromServer { return serverItems }
-        return StorageGuideCatalog.fallbackTips
+        return GuideCollectCatalog.fallbackTips
     }
 
-    static func applyServerItems(_ items: [StorageGuideItem]) {
+    static func applyServerItems(_ items: [GuideCollectItem]) {
         lock.lock()
         defer { lock.unlock() }
         loadedFromServer = true
@@ -65,8 +65,8 @@ enum StorageGuideRuntimeData {
 
 // MARK: - API
 
-enum StorageGuideAPI {
-    static func fetchTips(completion: @escaping (Result<[StorageGuideItem], Error>) -> Void) {
+enum GuideCollectAPI {
+    static func fetchTips(completion: @escaping (Result<[GuideCollectItem], Error>) -> Void) {
         ItemAPIClient.shared.perform(path: "storage-guide/tips", method: "GET") { result in
             switch result {
             case .failure(let e):
@@ -78,7 +78,7 @@ enum StorageGuideAPI {
                     completion(.failure(ItemAPIError.decodeFailed))
                     return
                 }
-                let items: [StorageGuideItem] = arr.compactMap { o in
+                let items: [GuideCollectItem] = arr.compactMap { o in
                     guard let title = o["title"] as? String,
                           let body = o["body"] as? String else { return nil }
                     let show: Bool = {
@@ -86,7 +86,7 @@ enum StorageGuideAPI {
                         if let n = o["showInMain"] as? NSNumber { return n.boolValue }
                         return false
                     }()
-                    return StorageGuideItem(title: title, body: body, showInMain: show)
+                    return GuideCollectItem(title: title, body: body, showInMain: show)
                 }
                 completion(.success(items))
             }
@@ -98,7 +98,7 @@ extension Notification.Name {
     static let storageGuideFavoritesDidChange = Notification.Name("storageGuideFavoritesDidChange")
 }
 
-enum StorageGuideFavoriteError: LocalizedError {
+enum GuideCollectError: LocalizedError {
     case limitReached
 
     var errorDescription: String? {
@@ -108,8 +108,8 @@ enum StorageGuideFavoriteError: LocalizedError {
     }
 }
 
-final class StorageGuideFavoritesStore {
-    static let shared = StorageGuideFavoritesStore()
+final class GuideCollectStore {
+    static let shared = GuideCollectStore()
     static let maxFavorites = 8
 
     /// 与旧版「只存 id」区分，避免解码失败
@@ -117,9 +117,9 @@ final class StorageGuideFavoritesStore {
 
     private init() {}
 
-    var entries: [StorageGuideFavoriteEntry] {
+    var entries: [GuideCollectEntry] {
         guard let data = UserDefaults.standard.data(forKey: storageKey),
-              let list = try? JSONDecoder().decode([StorageGuideFavoriteEntry].self, from: data) else {
+              let list = try? JSONDecoder().decode([GuideCollectEntry].self, from: data) else {
             return []
         }
         return list
@@ -131,14 +131,14 @@ final class StorageGuideFavoritesStore {
         entries.contains { $0.title == title && $0.body == body }
     }
 
-    func add(title: String, body: String) -> Result<Void, StorageGuideFavoriteError> {
+    func add(title: String, body: String) -> Result<Void, GuideCollectError> {
         var list = entries
         if list.contains(where: { $0.title == title && $0.body == body }) {
             postChange()
             return .success(())
         }
         guard list.count < Self.maxFavorites else { return .failure(.limitReached) }
-        list.append(StorageGuideFavoriteEntry(title: title, body: body))
+        list.append(GuideCollectEntry(title: title, body: body))
         save(list)
         postChange()
         return .success(())
@@ -151,7 +151,7 @@ final class StorageGuideFavoritesStore {
         postChange()
     }
 
-    private func save(_ list: [StorageGuideFavoriteEntry]) {
+    private func save(_ list: [GuideCollectEntry]) {
         guard let data = try? JSONEncoder().encode(list) else { return }
         UserDefaults.standard.set(data, forKey: storageKey)
     }

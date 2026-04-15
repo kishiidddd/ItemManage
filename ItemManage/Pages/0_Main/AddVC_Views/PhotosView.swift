@@ -168,7 +168,7 @@ class PhotoCell: UICollectionViewCell {
         let button = UIButton(type: .system)
         button.setImage(UIImage(systemName: "xmark.circle.fill"), for: .normal)
         button.tintColor = .systemRed
-        button.backgroundColor = .white
+        // button.backgroundColor = .white
         button.layer.cornerRadius = 12
         return button
     }()
@@ -231,26 +231,18 @@ class AddPhotoCell: UICollectionViewCell {
     private let containerView: UIView = {
         let view = UIView()
         view.backgroundColor = .systemGray6
-        view.layer.cornerRadius = 8
+        view.layer.cornerRadius = 6
         view.layer.borderWidth = 1
-        view.layer.borderColor = UIColor.systemGray4.cgColor
+        view.layer.borderColor =  UIColor.clear.cgColor //UIColor.systemGray4.cgColor
         return view
     }()
     
     private let plusImageView: UIImageView = {
         let iv = UIImageView()
         iv.image = UIImage(systemName: "plus.circle")
-        iv.tintColor = .systemGray3
+        iv.tintColor = .secondaryLabel
         iv.contentMode = .scaleAspectFit
         return iv
-    }()
-    
-    private let label: UILabel = {
-        let label = UILabel()
-        label.text = "添加照片"
-        label.font = .systemFont(ofSize: 12)
-        label.textColor = .systemGray3
-        return label
     }()
     
     override init(frame: CGRect) {
@@ -266,7 +258,6 @@ class AddPhotoCell: UICollectionViewCell {
     private func setupUI() {
         contentView.addSubview(containerView)
         containerView.addSubview(plusImageView)
-        containerView.addSubview(label)
     }
     
     private func setupConstraints() {
@@ -276,13 +267,9 @@ class AddPhotoCell: UICollectionViewCell {
         
         plusImageView.snp.makeConstraints { make in
             make.centerX.equalToSuperview()
-            make.centerY.equalToSuperview().offset(-10)
-            make.width.height.equalTo(30)
+            make.centerY.equalToSuperview()
+            make.width.height.equalTo(36)
         }
         
-        label.snp.makeConstraints { make in
-            make.top.equalTo(plusImageView.snp.bottom).offset(4)
-            make.centerX.equalToSuperview()
-        }
     }
 }

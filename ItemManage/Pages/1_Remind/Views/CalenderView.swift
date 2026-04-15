@@ -199,7 +199,7 @@ final class CalenderView: UIView {
     
     private func setupUI() {
         backgroundColor = .lightBlueColor
-        self.layer.cornerRadius = 20
+        self.layer.cornerRadius = 16
         
         addSubview(titleBarView)
         titleBarView.addSubview(prevMonthButton)

@@ -33,6 +33,7 @@ class AddItemViewController: UIViewController {
     private lazy var nameField: CustomTextField = {
         let field = CustomTextField()
         field.configure(title: "物品名称", placeholder: "请输入物品名称", isRequired: true)
+        field.textField.clearButtonMode = .never
         field.textField.delegate = self
         field.textField.addTarget(self, action: #selector(nameFieldChanged), for: .editingChanged)
         return field
@@ -40,21 +41,21 @@ class AddItemViewController: UIViewController {
 
     private lazy var categoryField: CustomPickerField = {
         let field = CustomPickerField()
-        field.configure(title: "分类", placeholder: "请选择分类", isRequired: true)
+        field.configure(title: "分类", placeholder: "请选择", isRequired: true)
         field.addTarget(self, action: #selector(categoryTapped), for: .touchUpInside)
         return field
     }()
 
     private lazy var primaryLocationField: CustomPickerField = {
         let field = CustomPickerField()
-        field.configure(title: "存放位置", placeholder: "请选择位置", isRequired: false)
+        field.configure(title: "存放位置", placeholder: "请选择", isRequired: false)
         field.addTarget(self, action: #selector(primaryLocationTapped), for: .touchUpInside)
         return field
     }()
 
     private lazy var secondaryLocationField: CustomPickerField = {
         let field = CustomPickerField()
-        field.configure(title: "具体位置", placeholder: "请选择具体位置", isRequired: false)
+        field.configure(title: "具体位置", placeholder: "请选择", isRequired: false)
         field.addTarget(self, action: #selector(secondaryLocationTapped), for: .touchUpInside)
         field.isEnabled = false
         return field
@@ -69,7 +70,7 @@ class AddItemViewController: UIViewController {
 
     private lazy var unitField: CustomPickerField = {
         let field = CustomPickerField()
-        field.configure(title: "单位", placeholder: "选择单位")
+        field.configure(title: "单位", placeholder: "请选择")
         field.addTarget(self, action: #selector(unitTapped), for: .touchUpInside)
         return field
     }()
@@ -85,6 +86,7 @@ class AddItemViewController: UIViewController {
     private lazy var shelfLifeField: CustomTextField = {
         let field = CustomTextField()
         field.configure(title: "保质期", placeholder: "请输入天数", keyboardType: .numberPad)
+        field.textField.clearButtonMode = .never
         field.textField.delegate = self
         field.textField.addTarget(self, action: #selector(shelfLifeFieldChanged), for: .editingChanged)
         return field
@@ -114,7 +116,7 @@ class AddItemViewController: UIViewController {
     }()
     private lazy var remarksTextView: CustomTextView = {
         let tv = CustomTextView()
-        tv.configure(placeholder: "请输入补充说明...", maxLength: 200)
+        tv.configure(placeholder: "请输入备注", maxLength: 200)
         tv.onTextChanged = { [weak self] text in self?.viewModel.remarks = text }
         return tv
     }()
@@ -357,7 +359,7 @@ class AddItemViewController: UIViewController {
     // MARK: - 选择器
 
     private func showCategoryPicker() {
-        let alert = UIAlertController(title: "选择分类", message: nil, preferredStyle: .actionSheet)
+        let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         alert.addAction(UIAlertAction(title: "添加分类", style: .default) { [weak self] _ in
             let vc = CategoryManageViewController()
             vc.hidesBottomBarWhenPushed = true
@@ -373,7 +375,7 @@ class AddItemViewController: UIViewController {
     }
 
     private func showPrimaryLocationPicker() {
-        let alert = UIAlertController(title: "选择存放位置", message: nil, preferredStyle: .actionSheet)
+        let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         alert.addAction(UIAlertAction(title: "添加位置", style: .default) { [weak self] _ in
             let vc = LocationManagementViewController()
             vc.hidesBottomBarWhenPushed = true
@@ -393,7 +395,7 @@ class AddItemViewController: UIViewController {
 
     private func showSecondaryLocationPicker() {
         guard viewModel.selectedPrimaryLocation != nil else {
-            showError("暂无具体位置")
+            showError("请先选择存放位置")
             return
         }
         let list = viewModel.availableSecondaryLocations
@@ -401,7 +403,7 @@ class AddItemViewController: UIViewController {
             showError("该位置下暂无具体位置")
             return
         }
-        let alert = UIAlertController(title: "选择具体位置", message: nil, preferredStyle: .actionSheet)
+        let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         alert.addAction(UIAlertAction(title: "添加位置", style: .default) { [weak self] _ in
             let vc = LocationManagementViewController()
             vc.hidesBottomBarWhenPushed = true
@@ -419,7 +421,7 @@ class AddItemViewController: UIViewController {
     }
 
     private func showUnitPicker() {
-        let alert = UIAlertController(title: "选择单位", message: nil, preferredStyle: .actionSheet)
+        let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         alert.addAction(UIAlertAction(title: "添加单位", style: .default) { [weak self] _ in
             let vc = UnitManageViewController()
             vc.hidesBottomBarWhenPushed = true
@@ -441,7 +443,7 @@ class AddItemViewController: UIViewController {
         dp.preferredDatePickerStyle = .wheels
         dp.locale = Locale(identifier: "zh_Hans_CN")
         dp.calendar = Calendar(identifier: .gregorian)
-        let alert = UIAlertController(title: field == .production ? "选择生产日期" : "选择过期日期", message: nil, preferredStyle: .actionSheet)
+        let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         let holder = UIViewController()
         holder.view.addSubview(dp)
         dp.snp.makeConstraints { make in

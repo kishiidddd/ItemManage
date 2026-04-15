@@ -227,7 +227,7 @@ class LocationManagementViewController: UIViewController {
     @objc private func addPrimaryLocationTapped() {
         showCustomTextFieldAlert(
             title: "添加一级位置",
-            placeholder: "位置名称（如：冰箱、衣柜）",
+            placeholder: "请输入位置名称",
             cancelTitle: "取消",
             confirmTitle: "添加"
         ) { [weak self] name in
@@ -244,8 +244,8 @@ class LocationManagementViewController: UIViewController {
 
         showCustomTextFieldAlert(
             title: "添加二级位置",
-            subtitle: "位置：\(primaryLocation.name)",
-            placeholder: "位置名称（如：冷藏层、挂衣区）",
+            // subtitle: "位置：\(primaryLocation.name)",
+            placeholder: "请输入位置名称",
             cancelTitle: "取消",
             confirmTitle: "添加"
         ) { [weak self] name in

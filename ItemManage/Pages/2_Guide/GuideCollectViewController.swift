@@ -6,9 +6,9 @@
 import UIKit
 import SnapKit
 
-final class StorageGuideFavoritesViewController: UIViewController {
+final class GuideCollectViewController: UIViewController {
 
-    private var entries: [StorageGuideFavoriteEntry] = []
+    private var entries: [GuideCollectEntry] = []
 
     private let tableView: UITableView = {
         let t = UITableView(frame: .zero, style: .insetGrouped)
@@ -63,14 +63,14 @@ final class StorageGuideFavoritesViewController: UIViewController {
     }
 
     @objc private func reload() {
-        entries = StorageGuideFavoritesStore.shared.entries
+        entries = GuideCollectStore.shared.entries
         tableView.reloadData()
         emptyLabel.isHidden = !entries.isEmpty
         tableView.isHidden = entries.isEmpty
     }
 }
 
-extension StorageGuideFavoritesViewController: UITableViewDataSource, UITableViewDelegate {
+extension GuideCollectViewController: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         entries.count
     }
@@ -79,7 +79,7 @@ extension StorageGuideFavoritesViewController: UITableViewDataSource, UITableVie
         let cell = tableView.dequeueReusableCell(withIdentifier: FavoriteTipCell.reuseId, for: indexPath) as! FavoriteTipCell
         let entry = entries[indexPath.row]
         cell.configure(entry: entry) { [weak self] in
-            StorageGuideFavoritesStore.shared.remove(title: entry.title, body: entry.body)
+            GuideCollectStore.shared.remove(title: entry.title, body: entry.body)
             self?.reload()
         }
         return cell
@@ -140,7 +140,7 @@ private final class FavoriteTipCell: UITableViewCell {
 
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
-    func configure(entry: StorageGuideFavoriteEntry, onUnfavorite: @escaping () -> Void) {
+    func configure(entry: GuideCollectEntry, onUnfavorite: @escaping () -> Void) {
         titleLabel.text = entry.title
         bodyLabel.text = entry.body
         self.onUnfavorite = onUnfavorite

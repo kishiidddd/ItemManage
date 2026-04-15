@@ -12,19 +12,25 @@ import Kingfisher
 class HomeItemCell: UITableViewCell {
     
     static let identifier = "HomeItemCell"
+
+    private static let dayFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        return f
+    }()
     
     // MARK: - UI Elements
     private let cardView: UIView = {
         let view = UIView()
         view.backgroundColor = UIColor(white: 0.97, alpha: 1)
-        view.layer.cornerRadius = 16
+        view.layer.cornerRadius = 18
         return view
     }()
     
     private let itemImageView: UIImageView = {
         let iv = UIImageView()
         iv.contentMode = .scaleAspectFill
-        iv.layer.cornerRadius = 8
+        iv.layer.cornerRadius = 6
         iv.clipsToBounds = true
         iv.image = UIImage(systemName: "photo")
         iv.tintColor = .gray
@@ -42,6 +48,7 @@ class HomeItemCell: UITableViewCell {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 14)
         label.textColor = .gray
+        label.textAlignment = .right
         return label
     }()
     
@@ -90,16 +97,17 @@ class HomeItemCell: UITableViewCell {
         nameLabel.snp.makeConstraints { make in
             make.top.equalToSuperview().offset(12)
             make.left.equalTo(itemImageView.snp.right).offset(12)
-            make.right.lessThanOrEqualToSuperview().offset(-12)
+            make.right.lessThanOrEqualTo(quantityLabel.snp.left).offset(-8)
         }
         
         quantityLabel.snp.makeConstraints { make in
-            make.top.equalTo(nameLabel.snp.bottom).offset(4)
-            make.left.equalTo(nameLabel)
+            make.centerY.equalTo(nameLabel)
+            make.right.equalToSuperview().offset(-12)
+            make.width.greaterThanOrEqualTo(36)
         }
         
         statusLabel.snp.makeConstraints { make in
-            make.top.equalTo(quantityLabel.snp.bottom).offset(4)
+            make.top.equalTo(nameLabel.snp.bottom).offset(4)
             make.left.equalTo(nameLabel)
             make.right.lessThanOrEqualToSuperview().offset(-12)
             make.bottom.equalToSuperview().offset(-12)
@@ -109,7 +117,7 @@ class HomeItemCell: UITableViewCell {
     
     func configure(with item: ItemModel) {
         nameLabel.text = item.name
-        quantityLabel.text = "数量：\(item.quantity)"
+        quantityLabel.text = "x\(item.quantity)"
         
         // 加载图片（与详情页一致：优先本地，再 URL）
         if let first = item.photos.first {
@@ -127,12 +135,13 @@ class HomeItemCell: UITableViewCell {
         // 设置过期状态
         if let expiryDate = item.expiryDate {
             let daysUntilExpire = Calendar.current.dateComponents([.day], from: Date(), to: expiryDate).day ?? 0
+            let expiryDateText = Self.dayFormatter.string(from: expiryDate)
             
             if daysUntilExpire < 0 {
-                statusLabel.text = "已过期"
+                statusLabel.text = "已过期 · \(expiryDateText)"
                 statusLabel.textColor = .red
             } else if daysUntilExpire <= 3 {
-                statusLabel.text = "即将过期"
+                statusLabel.text = "即将过期 · \(expiryDateText)"
                 statusLabel.textColor = .orange
             } else {
                 statusLabel.text = "\(daysUntilExpire)天后过期"

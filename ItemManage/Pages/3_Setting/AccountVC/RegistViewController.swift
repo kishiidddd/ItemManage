@@ -96,7 +96,7 @@ class RegistViewController: UIViewController {
         tf.font = .systemFont(ofSize: 16)
         tf.borderStyle = .none
         tf.isSecureTextEntry = true
-        tf.clearButtonMode = .whileEditing
+        tf.clearButtonMode = .never
         
         let leftView = UIView(frame: CGRect(x: 0, y: 0, width: 40, height: 50))
         let iconView = UIImageView(image: UIImage(systemName: "lock"))
@@ -105,6 +105,14 @@ class RegistViewController: UIViewController {
         leftView.addSubview(iconView)
         tf.leftView = leftView
         tf.leftViewMode = .always
+
+        let rightButton = UIButton(type: .system)
+        rightButton.setImage(UIImage(systemName: "eye.slash"), for: .normal)
+        rightButton.tintColor = .gray
+        rightButton.frame = CGRect(x: 0, y: 0, width: 40, height: 50)
+        rightButton.addTarget(self, action: #selector(toggleConfirmPasswordVisibility), for: .touchUpInside)
+        tf.rightView = rightButton
+        tf.rightViewMode = .whileEditing
         
         return tf
     }()
@@ -254,6 +262,12 @@ class RegistViewController: UIViewController {
     @objc private func togglePasswordVisibility(_ sender: UIButton) {
         passwordField.isSecureTextEntry.toggle()
         let imageName = passwordField.isSecureTextEntry ? "eye.slash" : "eye"
+        sender.setImage(UIImage(systemName: imageName), for: .normal)
+    }
+
+    @objc private func toggleConfirmPasswordVisibility(_ sender: UIButton) {
+        confirmPasswordField.isSecureTextEntry.toggle()
+        let imageName = confirmPasswordField.isSecureTextEntry ? "eye.slash" : "eye"
         sender.setImage(UIImage(systemName: imageName), for: .normal)
     }
     

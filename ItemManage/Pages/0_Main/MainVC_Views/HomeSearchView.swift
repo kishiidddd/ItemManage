@@ -22,7 +22,7 @@ class HomeSearchView: UIView {
     private lazy var containerView: UIView = {
         let view = UIView()
         view.backgroundColor = .white
-        view.layer.cornerRadius = 16
+        view.layer.cornerRadius = 12
         view.layer.masksToBounds = true
         return view
     }()

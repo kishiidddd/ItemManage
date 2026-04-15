@@ -39,7 +39,7 @@ class RemindViewController: UIViewController {
     private lazy var expiredCardView: UIView = {
         let view = UIView()
         view.backgroundColor = .white
-        view.layer.cornerRadius = 16
+        view.layer.cornerRadius = 18
         view.layer.masksToBounds = true
         // 添加阴影
         view.layer.shadowColor = UIColor.black.cgColor
@@ -81,13 +81,8 @@ class RemindViewController: UIViewController {
         let view = UIView()
         
         let imageView = UIImageView()
-        // 尝试加载图片，如果没有则使用系统图标
-        if let image = UIImage(named: "remind_no_expired") {
-            imageView.image = image
-        } else {
-            imageView.image = UIImage(systemName: "bell.slash")
-            imageView.tintColor = .gray
-        }
+        imageView.image = UIImage(systemName: "tray")
+        imageView.tintColor = .themeBlueColor
         imageView.contentMode = .scaleAspectFit
         
         let label = UILabel()
@@ -355,7 +350,7 @@ class ExpiredItemCell: UITableViewCell {
         quantityLabel.textColor = .darkGray
         quantityLabel.textAlignment = .right
         
-        // 过期日期
+        // 生产日期 + 保质期
         expireDateLabel.font = UIFont.systemFont(ofSize: 12)
         expireDateLabel.textColor = .gray
         expireDateLabel.textAlignment = .right
@@ -432,13 +427,16 @@ class ExpiredItemCell: UITableViewCell {
         // 数量
         quantityLabel.text = "x\(item.quantity)"
         
-        // 过期日期
+        // 右下角文案改为：生产日期 · 保质期X天
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "zh_CN")
+        formatter.dateFormat = "yyyy-MM-dd"
+        let productionText = item.productionDate.map { formatter.string(from: $0) } ?? "生产日期未知"
+        let shelfLifeText = item.shelfLife.map { "保质期\($0)天" } ?? "保质期未知"
+        expireDateLabel.text = "\(productionText) · \(shelfLifeText)"
+
+        // 颜色/告警仍按过期状态判断
         if let expiryDate = item.expiryDate {
-            let formatter = DateFormatter()
-            formatter.locale = Locale(identifier: "zh_CN")
-            formatter.dateFormat = "yyyy-MM-dd"
-            expireDateLabel.text = formatter.string(from: expiryDate)
-            
             // 判断过期状态
             let calendar = Calendar.current
             let daysUntilExpire = calendar.dateComponents([.day], from: Date(), to: expiryDate).day ?? 0
@@ -459,7 +457,6 @@ class ExpiredItemCell: UITableViewCell {
                 expireDateLabel.textColor = .gray
             }
         } else {
-            expireDateLabel.text = "无过期时间"
             warningIcon.isHidden = true
             expireDateLabel.textColor = .gray
         }

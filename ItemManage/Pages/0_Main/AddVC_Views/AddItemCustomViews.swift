@@ -27,7 +27,7 @@ class SectionView: UIView {
         sv.axis = .vertical
         sv.spacing = 12
         sv.backgroundColor = .systemBackground
-        sv.layer.cornerRadius = 10
+        sv.layer.cornerRadius = 12
         sv.layoutMargins = UIEdgeInsets(top: 12, left: 16, bottom: 12, right: 16)
         sv.isLayoutMarginsRelativeArrangement = true
         return sv

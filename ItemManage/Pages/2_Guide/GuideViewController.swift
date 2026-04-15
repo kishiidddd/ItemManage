@@ -6,7 +6,7 @@
 import UIKit
 import SnapKit
 
-final class StorageGuideViewController: UIViewController {
+final class GuideViewController: UIViewController {
 
     private let tableView: UITableView = {
         let t = UITableView(frame: .zero, style: .insetGrouped)
@@ -17,7 +17,7 @@ final class StorageGuideViewController: UIViewController {
         return t
     }()
 
-    private var displayedItems: [StorageGuideItem] = []
+    private var displayedItems: [GuideCollectItem] = []
     /// 主推在 `displayedItems` 中的下标
     private var spotlightIndex: Int = 0
     /// 除主推外的原始下标顺序
@@ -41,7 +41,7 @@ final class StorageGuideViewController: UIViewController {
         }
 
         setupTableHeader()
-        applyItems(StorageGuideRuntimeData.displayItems)
+        applyItems(GuideCollectRuntimeData.displayItems)
 
         NotificationCenter.default.addObserver(
             self,
@@ -81,7 +81,7 @@ final class StorageGuideViewController: UIViewController {
         loadTipsFromNetwork()
     }
 
-    private func applyItems(_ items: [StorageGuideItem]) {
+    private func applyItems(_ items: [GuideCollectItem]) {
         displayedItems = items
         selectedOriginalIndex = nil
         if items.isEmpty {
@@ -94,12 +94,12 @@ final class StorageGuideViewController: UIViewController {
     }
 
     private func loadTipsFromNetwork() {
-        StorageGuideAPI.fetchTips { [weak self] result in
+        GuideCollectAPI.fetchTips { [weak self] result in
             DispatchQueue.main.async {
                 guard let self = self else { return }
                 switch result {
                 case .success(let items):
-                    StorageGuideRuntimeData.applyServerItems(items)
+                    GuideCollectRuntimeData.applyServerItems(items)
                     self.applyItems(items)
                     self.favoritesDidChange()
                 case .failure:
@@ -119,7 +119,7 @@ final class StorageGuideViewController: UIViewController {
     }
 
     @objc private func openFavorites() {
-        let vc = StorageGuideFavoritesViewController()
+        let vc = GuideCollectViewController()
         vc.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(vc, animated: true)
     }
@@ -135,7 +135,7 @@ final class StorageGuideViewController: UIViewController {
     private func toggleFavorite(at originalIndex: Int) {
         guard originalIndex >= 0, originalIndex < displayedItems.count else { return }
         let item = displayedItems[originalIndex]
-        let store = StorageGuideFavoritesStore.shared
+        let store = GuideCollectStore.shared
         if store.isFavorite(title: item.title, body: item.body) {
             store.remove(title: item.title, body: item.body)
             tableView.reloadData()
@@ -147,7 +147,7 @@ final class StorageGuideViewController: UIViewController {
         case .failure:
             let alert = UIAlertController(
                 title: "已达收藏上限",
-                message: "最多只能收藏 \(StorageGuideFavoritesStore.maxFavorites) 条贴士，可在收藏列表中取消部分后再试。",
+                message: "最多只能收藏 \(GuideCollectStore.maxFavorites) 条贴士，可在收藏列表中取消部分后再试。",
                 preferredStyle: .alert
             )
             alert.addAction(UIAlertAction(title: "好的", style: .default))
@@ -158,7 +158,7 @@ final class StorageGuideViewController: UIViewController {
 
 // MARK: - UITableView
 
-extension StorageGuideViewController: UITableViewDataSource, UITableViewDelegate {
+extension GuideViewController: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         displayedItems.isEmpty ? 0 : 1 + otherIndices.count
     }
@@ -167,7 +167,7 @@ extension StorageGuideViewController: UITableViewDataSource, UITableViewDelegate
         let orig = originalIndex(for: indexPath)
         let item = displayedItems[orig]
         let selected = selectedOriginalIndex == orig
-        let favorited = StorageGuideFavoritesStore.shared.isFavorite(title: item.title, body: item.body)
+        let favorited = GuideCollectStore.shared.isFavorite(title: item.title, body: item.body)
 
         if indexPath.row == 0 {
             let cell = tableView.dequeueReusableCell(withIdentifier: StorageGuideHeroTableCell.reuseId, for: indexPath) as! StorageGuideHeroTableCell
@@ -216,7 +216,7 @@ private final class StorageGuideHeroTableCell: UITableViewCell {
         backgroundColor = .clear
         contentView.backgroundColor = .clear
 
-        card.layer.cornerRadius = 16
+        card.layer.cornerRadius = 12
         card.backgroundColor = .systemBlue
 
         titleLabel.font = .systemFont(ofSize: 22, weight: .bold)
@@ -267,7 +267,7 @@ private final class StorageGuideHeroTableCell: UITableViewCell {
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
     func configure(
-        item: StorageGuideItem,
+        item: GuideCollectItem,
         originalIndex: Int,
         selected: Bool,
         favorited: Bool,
@@ -349,7 +349,7 @@ private final class StorageGuideTipTableCell: UITableViewCell {
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
     func configure(
-        item: StorageGuideItem,
+        item: GuideCollectItem,
         originalIndex: Int,
         selected: Bool,
         favorited: Bool,

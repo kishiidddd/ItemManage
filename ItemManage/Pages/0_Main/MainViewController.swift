@@ -27,7 +27,7 @@ class MainViewController: UIViewController {
     private lazy var grayBg : UIView = {
         let bg = UIView()
         bg.backgroundColor = .lightGrayBgColor
-        bg.layer.cornerRadius = 20
+        bg.layer.cornerRadius = 18
         bg.layer.masksToBounds = true
         return bg
     }()
@@ -84,10 +84,10 @@ class MainViewController: UIViewController {
 
     /// 拉取指南列表并刷新首页主推卡片文案（失败时仍用本地兜底 `displayItems`）
     private func refreshHomeGuideSpotlightFromServer() {
-        StorageGuideAPI.fetchTips { [weak self] result in
+        GuideCollectAPI.fetchTips { [weak self] result in
             DispatchQueue.main.async {
                 if case .success(let items) = result {
-                    StorageGuideRuntimeData.applyServerItems(items)
+                    GuideCollectRuntimeData.applyServerItems(items)
                 }
                 self?.messageScrollView.updateFromHome(allItems: ItemRepository.shared.allItems)
             }
@@ -100,9 +100,9 @@ class MainViewController: UIViewController {
               let vcs = tab.viewControllers,
               let idx = vcs.firstIndex(where: { vc in
                   if let nav = vc as? UINavigationController {
-                      return nav.viewControllers.contains { $0 is StorageGuideViewController }
+                      return nav.viewControllers.contains { $0 is GuideViewController }
                   }
-                  return vc is StorageGuideViewController
+                  return vc is GuideViewController
               }) else { return }
         tab.selectedIndex = idx
         if let nav = vcs[idx] as? UINavigationController {

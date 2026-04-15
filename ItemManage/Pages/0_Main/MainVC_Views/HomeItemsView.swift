@@ -54,7 +54,7 @@ class HomeItemsView: UIView {
         
         let imageView = UIImageView()
         imageView.image = UIImage(systemName: "tray")
-        imageView.tintColor = .gray
+        imageView.tintColor = .themeBlueColor
         imageView.contentMode = .scaleAspectFit
         
         let label = UILabel()
@@ -209,7 +209,7 @@ class HomeItemsView: UIView {
             
             let indicator = UIView()
             indicator.backgroundColor = .systemBlue
-            indicator.layer.cornerRadius = 3
+            indicator.layer.cornerRadius = 2
             indicator.isHidden = true
             
             container.addSubview(indicator)

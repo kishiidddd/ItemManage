@@ -30,7 +30,7 @@ class FWMainTabViewController: UITabBarController {
                                       image: UIImage(named: "tab_remind_icon")?.withRenderingMode(.alwaysOriginal),
                                       selectedImage: UIImage(named: "tab_remind_icon_select")?.withRenderingMode(.alwaysOriginal))
         
-        let vc3 = StorageGuideViewController()
+        let vc3 = GuideViewController()
         vc3.tabBarItem = UITabBarItem(title: "指南",
                                       image: UIImage(named: "tab_add_icon")?.withRenderingMode(.alwaysOriginal),
                                       selectedImage: UIImage(named: "tab_add_icon_select")?.withRenderingMode(.alwaysOriginal))
@@ -51,7 +51,7 @@ class FWMainTabViewController: UITabBarController {
         if #available(iOS 13.0, *) {
             let appearance = UITabBarAppearance()
             appearance.configureWithOpaqueBackground()
-            appearance.backgroundColor = .themeBeigeColor // 背景颜色
+            appearance.backgroundColor = .white // 背景颜色
             
             // 标准外观
             tabBar.standardAppearance = appearance
@@ -62,7 +62,7 @@ class FWMainTabViewController: UITabBarController {
             }
         } else {
             // iOS 13 以下
-            tabBar.barTintColor = .themeBeigeColor // 背景色
+            tabBar.barTintColor = .white // 背景色
         }
     }
 

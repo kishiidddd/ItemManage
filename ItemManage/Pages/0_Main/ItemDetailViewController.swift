@@ -34,7 +34,7 @@ class ItemDetailPopupViewController: UIViewController {
     private lazy var cardContainer: UIView = {
         let view = UIView()
         view.backgroundColor = .white
-        view.layer.cornerRadius = 16
+        view.layer.cornerRadius = 18
         view.clipsToBounds = true
         return view
     }()
@@ -79,7 +79,7 @@ class ItemDetailPopupViewController: UIViewController {
         label.font = UIFont.systemFont(ofSize: 14, weight: .medium)  // 字体调大
         label.textColor = .white
         label.backgroundColor = .systemBlue
-        label.layer.cornerRadius = 6  // 圆角调大
+        label.layer.cornerRadius = 8  // 圆角调大
         label.clipsToBounds = true
         label.textAlignment = .center
         return label
@@ -90,7 +90,7 @@ class ItemDetailPopupViewController: UIViewController {
         label.font = UIFont.systemFont(ofSize: 14, weight: .medium)
         label.textColor = .white
         label.backgroundColor = UIColor(hex: "#6C7A89")
-        label.layer.cornerRadius = 6
+        label.layer.cornerRadius = 8
         label.clipsToBounds = true
         label.textAlignment = .center
         return label
@@ -101,7 +101,7 @@ class ItemDetailPopupViewController: UIViewController {
         label.font = UIFont.systemFont(ofSize: 14, weight: .medium)
         label.textColor = .white
         label.backgroundColor = UIColor(hex: "#4CAF50")
-        label.layer.cornerRadius = 6
+        label.layer.cornerRadius = 8
         label.clipsToBounds = true
         label.textAlignment = .center
         return label

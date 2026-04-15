@@ -28,7 +28,7 @@ final class HomeExpiryItemsListViewController: UIViewController {
     private lazy var panel: UIView = {
         let v = UIView()
         v.backgroundColor = .secondarySystemGroupedBackground
-        v.layer.cornerRadius = 20
+        v.layer.cornerRadius = 16
         v.layer.masksToBounds = true
         return v
     }()

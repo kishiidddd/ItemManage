@@ -31,7 +31,7 @@ class SettingViewController: UIViewController {
     private let scrollView: UIScrollView = {
         let sv = UIScrollView()
         sv.showsVerticalScrollIndicator = false
-        sv.backgroundColor = .lightGrayBgColor
+        sv.backgroundColor = .clear
         return sv
     }()
     
