@@ -42,6 +42,9 @@ final class CalenderView: UIView {
     
     /// 今天日期
     private let todayDate = Date()
+
+    /// 有“过期物品”的日期集合（按自然日 key 存储：yyyy-MM-dd）
+    private var markedDayKeys = Set<String>()
     
     // MARK: - UI Components
     
@@ -135,6 +138,7 @@ final class CalenderView: UIView {
         let isCurrentMonth: Bool
         let isToday: Bool
         let isSelected: Bool
+        let hasMark: Bool
     }
     
     /// 当前月的日期数据
@@ -370,7 +374,7 @@ final class CalenderView: UIView {
         
         // 添加空白日期（月初之前的日期）
         for _ in 0..<firstWeekday {
-            result.append(CalendarDayItem(date: nil, isCurrentMonth: false, isToday: false, isSelected: false))
+            result.append(CalendarDayItem(date: nil, isCurrentMonth: false, isToday: false, isSelected: false, hasMark: false))
         }
         
         // 添加月份中的所有日期
@@ -379,7 +383,8 @@ final class CalenderView: UIView {
             let isToday = gregorianCalendar.isDateInToday(currentDate)
             // 判断是否选中：必须年月日完全相同
             let isSelected = gregorianCalendar.isDate(currentDate, equalTo: pickedDate ?? Date(), toGranularity: .day)
-            result.append(CalendarDayItem(date: currentDate, isCurrentMonth: isCurrentMonth, isToday: isToday, isSelected: isSelected))
+            let hasMark = markedDayKeys.contains(dayKey(for: currentDate))
+            result.append(CalendarDayItem(date: currentDate, isCurrentMonth: isCurrentMonth, isToday: isToday, isSelected: isSelected, hasMark: hasMark))
             currentDate = gregorianCalendar.date(byAdding: .day, value: 1, to: currentDate) ?? currentDate
         }
         
@@ -391,10 +396,25 @@ final class CalenderView: UIView {
         let totalCellsNeeded = finalRows * 7
         
         while result.count < totalCellsNeeded {
-            result.append(CalendarDayItem(date: nil, isCurrentMonth: false, isToday: false, isSelected: false))
+            result.append(CalendarDayItem(date: nil, isCurrentMonth: false, isToday: false, isSelected: false, hasMark: false))
         }
         
         return result
+    }
+
+    private func dayKey(for date: Date) -> String {
+        let y = gregorianCalendar.component(.year, from: date)
+        let m = gregorianCalendar.component(.month, from: date)
+        let d = gregorianCalendar.component(.day, from: date)
+        return String(format: "%04d-%02d-%02d", y, m, d)
+    }
+
+    /// 设置“有过期物品”的日期，用于在对应日期下显示小红点
+    func setMarkedExpiryDates(_ dates: [Date]) {
+        markedDayKeys = Set(dates.map { dayKey(for: $0) })
+        // 重新生成数据并刷新
+        generateMonthData()
+        reloadAllCollectionViews()
     }
     
     /// 更新月份标题
@@ -748,7 +768,8 @@ extension CalenderView: UICollectionViewDataSource {
                 with: date,
                 isCurrentMonth: item.isCurrentMonth,
                 isToday: item.isToday,
-                isSelected: item.isSelected
+                isSelected: item.isSelected,
+                showMark: item.hasMark && item.isCurrentMonth
             )
         } else {
             cell.resetCell()
@@ -848,6 +869,17 @@ private class CalendarDayCell: UICollectionViewCell {
         view.clipsToBounds = true
         return view
     }()
+
+    private lazy var markDotView: UIView = {
+        let v = UIView()
+        v.backgroundColor = .systemRed
+        v.layer.cornerRadius = 3
+        v.isHidden = true
+        v.snp.makeConstraints { make in
+            make.width.height.equalTo(6)
+        }
+        return v
+    }()
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -862,6 +894,7 @@ private class CalendarDayCell: UICollectionViewCell {
         contentView.addSubview(styleBackgroundView)
         contentView.addSubview(containerStackView)
         containerStackView.addArrangedSubview(dayLabel)
+        containerStackView.addArrangedSubview(markDotView)
         
         styleBackgroundView.snp.makeConstraints { make in
             make.top.bottom.equalToSuperview().inset(2)
@@ -881,12 +914,14 @@ private class CalendarDayCell: UICollectionViewCell {
         dayLabel.text = ""
         contentView.backgroundColor = .clear
         styleBackgroundView.backgroundColor = .clear
+        markDotView.isHidden = true
     }
     
-    func configure(with date: Date, isCurrentMonth: Bool, isToday: Bool, isSelected: Bool) {
+    func configure(with date: Date, isCurrentMonth: Bool, isToday: Bool, isSelected: Bool, showMark: Bool) {
         let calendar = Calendar.current
         let day = calendar.component(.day, from: date)
         dayLabel.text = "\(day)"
+        markDotView.isHidden = !showMark
         
         // 设置文字颜色
         if !isCurrentMonth {

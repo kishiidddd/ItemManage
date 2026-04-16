@@ -14,6 +14,7 @@ class RemindViewController: UIViewController {
     // MARK: - Properties
     private var expiredItems: [ItemModel] = []
     private var selectedDate: Date = Date()
+    private let repository = ItemRepository.shared
     
     /// 日历视图高度约束
     private var calendarHeightConstraint: Constraint?
@@ -116,7 +117,13 @@ class RemindViewController: UIViewController {
         super.viewDidLoad()
         setupUI()
         setupConstraints()
+        refreshCalendarMarks()
         loadExpiredItems(for: selectedDate)
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        refreshCalendarMarks()
     }
     
     // MARK: - Setup
@@ -222,6 +229,11 @@ class RemindViewController: UIViewController {
                 }
             }
         }
+    }
+
+    private func refreshCalendarMarks() {
+        let dates = repository.getAllItems().compactMap { $0.expiryDate }
+        calendarView.setMarkedExpiryDates(dates)
     }
     
     private func showError(_ message: String) {
