@@ -123,21 +123,22 @@ class LocationManagementViewController: UIViewController {
         splitContainer.addSubview(leftContainer)
         leftContainer.snp.makeConstraints { make in
             make.left.top.bottom.equalToSuperview()
-            make.width.equalToSuperview().multipliedBy(0.5)
+            make.width.equalToSuperview().multipliedBy(0.4)
         }
 
         splitContainer.addSubview(rightContainer)
         rightContainer.snp.makeConstraints { make in
             make.right.top.bottom.equalToSuperview()
-            make.width.equalToSuperview().multipliedBy(0.5)
+            make.width.equalToSuperview().multipliedBy(0.6)
         }
 
         let dividerLine = UIView()
         dividerLine.backgroundColor = UIColor.separator
         splitContainer.addSubview(dividerLine)
         dividerLine.snp.makeConstraints { make in
-            make.centerX.equalToSuperview()
-            make.top.bottom.equalToSuperview()
+            make.left.equalTo(leftContainer.snp.right)
+            make.top.equalTo(leftContainer.safeAreaLayoutGuide.snp.top)
+            make.bottom.equalToSuperview()
             make.width.equalTo(0.5)
         }
 
@@ -153,7 +154,8 @@ class LocationManagementViewController: UIViewController {
         leftContainer.addSubview(leftHeaderRow)
         leftHeaderRow.snp.makeConstraints { make in
             make.top.equalTo(leftContainer.safeAreaLayoutGuide.snp.top).offset(12)
-            make.left.right.equalToSuperview().inset(16)
+            make.left.equalToSuperview().inset(16)
+            make.right.equalToSuperview()
         }
         addPrimaryIconButton.snp.makeConstraints { make in
             make.width.height.equalTo(42)

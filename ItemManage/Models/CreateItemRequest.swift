@@ -26,7 +26,6 @@ class CreateItemRequest: HandyJSON {
     var expiryDate: Date?          // 过期日期
     
     var remarks: String?
-    var level: Int = 3
     var parentId: String?
     var photos: [String] = []  // 照片URL或base64
     
@@ -144,8 +143,7 @@ class CreateItemRequest: HandyJSON {
         var dict: [String: Any] = [
             "name": name,
             "categoryId": categoryId,
-            "quantity": quantity,
-            "level": level
+            "quantity": quantity
         ]
         
         if let unitId = unitId {
