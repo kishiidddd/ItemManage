@@ -303,7 +303,7 @@ extension MainViewController: UITableViewDataSource, UITableViewDelegate {
         ) as! HomeItemCell
         
         let item = viewModel.filteredItems[indexPath.row]
-        cell.configure(with: item)
+        cell.configure(with: item, showLocationSuffix: true)
         
         return cell
     }

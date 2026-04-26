@@ -115,8 +115,24 @@ class HomeItemCell: UITableViewCell {
         
     }
     
-    func configure(with item: ItemModel) {
-        nameLabel.text = item.name
+    func configure(with item: ItemModel, showLocationSuffix: Bool = false) {
+        if showLocationSuffix {
+            let primary = item.primaryLocation?.name.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            let secondary = item.secondaryLocation?.name.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            
+            let suffix: String
+            if !primary.isEmpty, !secondary.isEmpty {
+                suffix = "（\(primary)->\(secondary)）"
+            } else if !primary.isEmpty {
+                suffix = "（\(primary)）"
+            } else {
+                suffix = ""
+            }
+            
+            nameLabel.text = item.name + suffix
+        } else {
+            nameLabel.text = item.name
+        }
         quantityLabel.text = "x\(item.quantity)"
         
         // 加载图片（与详情页一致：优先本地，再 URL）
