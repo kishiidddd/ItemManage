@@ -43,12 +43,12 @@ class CustomAlertView: UIView {
     private lazy var cancelButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("取消", for: .normal)
-        button.setTitleColor(.black, for: .normal)
+        button.setTitleColor(.systemBlue, for: .normal)
         button.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
         button.backgroundColor = .white
         button.layer.borderWidth = 1
-        button.layer.borderColor = UIColor.lightGray.withAlphaComponent(0.3).cgColor
-        button.layer.cornerRadius = 24
+        button.layer.borderColor = UIColor.systemBlue.cgColor
+        button.layer.cornerRadius = 8
         button.addTarget(self, action: #selector(cancelButtonTapped), for: .touchUpInside)
         return button
     }()
@@ -59,7 +59,8 @@ class CustomAlertView: UIView {
         button.setTitleColor(.white, for: .normal)
         button.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
         button.backgroundColor = .systemBlue
-        button.layer.cornerRadius = 24
+        button.layer.cornerRadius = 8
+        button.layer.borderWidth = 0
         button.addTarget(self, action: #selector(confirmButtonTapped), for: .touchUpInside)
         return button
     }()
@@ -139,7 +140,7 @@ class CustomAlertView: UIView {
             make.left.equalTo(containerView).offset(24)
             make.right.equalTo(containerView).offset(-24)
             make.bottom.equalTo(containerView).offset(-20)
-            make.height.equalTo(50)
+            make.height.equalTo(44)
         }
     }
     
@@ -170,20 +171,21 @@ class CustomAlertView: UIView {
     func show(in view: UIView) {
         // 设置初始状态
         self.frame = view.bounds
-        self.alpha = 0
+        self.alpha = 1
+        dimmedView.alpha = 0
         containerView.transform = CGAffineTransform(scaleX: 1.2, y: 1.2)
         
         view.addSubview(self)
         
         UIView.animate(withDuration: 0.25, delay: 0, options: .curveEaseOut) {
-            self.alpha = 1
+            self.dimmedView.alpha = 1
             self.containerView.transform = .identity
         }
     }
     
     func dismiss() {
         UIView.animate(withDuration: 0.2, animations: {
-            self.alpha = 0
+            self.dimmedView.alpha = 0
             self.containerView.transform = CGAffineTransform(scaleX: 0.8, y: 0.8)
         }) { _ in
             self.removeFromSuperview()

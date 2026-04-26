@@ -566,18 +566,16 @@ class ItemDetailPopupViewController: UIViewController {
     }
     
     @objc private func deleteButtonTapped() {
-        let alert = UIAlertController(
+        showCustomAlert(
             title: "删除物品",
-            message: "确定要删除「\(item.name)」吗？此操作不可撤销。",
-            preferredStyle: .alert
+            subtitle: "确定要删除「\(item.name)」吗？此操作不可撤销。",
+            cancelTitle: "取消",
+            confirmTitle: "删除",
+            onCancel: nil,
+            onConfirm: { [weak self] in
+                self?.deleteItem()
+            }
         )
-        
-        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
-        alert.addAction(UIAlertAction(title: "删除", style: .destructive) { [weak self] _ in
-            self?.deleteItem()
-        })
-        
-        present(alert, animated: true)
     }
     
     private func deleteItem() {
